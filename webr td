@@ -52,7 +52,7 @@ insert into sandbox.edit_sf
 		when (record_type_name = 'GrouponLive' or category_v3 = 'Tickets') and writeup = 'New deal section only' then 'Old show, old profile'
 		when (record_type_name = 'GrouponLive' or category_v3 = 'Tickets') and writeup in ('CC no changes','CC - no changes','CC touchup','No changes') then 'No changes'
 	-- local
-		when editor_ts = deal_vette_time and channel = 'Local' then 'DQ no changes'
+		when editor_ts = deal_vette_time and record_type_name in ('G1','gLite') then 'DQ no changes'
 		when writeup = 'CC - no changes' then 'No changes'
 		when writeup = 'CC no changes' then 'No changes'
 		when writeup = 'CC touchup' then 'CC touchup'
@@ -143,8 +143,7 @@ insert into sandbox.edit_sf
 	on load.opportunity_id = cc.opportunity_id
 	
 	where deal_key is not null
-	and opp.self_service_deal <> 1
-	and opp.travel_quality not in ('5. No Getaways; No G1','5. Getaways for simultaneous G1','4. No Getaways; Approved for G1');
+		and opp.self_service_deal <> 1;
 
 
 
