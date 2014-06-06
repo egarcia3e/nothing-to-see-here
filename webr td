@@ -3017,8 +3017,7 @@ join (select
         from sandbox.edit_zd_load) b
         on a.ticket_id = b.ticket_id
 where position('automation' in tags) = 0 and position('auto1' in tags) = 0 and position('azd' in tags) = 0
-    and country_city in (null,'-','Willow')
-    and status = 'Closed';
+    and country_city in (null,'-','Willow');
 
 
 
