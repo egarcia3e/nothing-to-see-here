@@ -1,0 +1,98 @@
+/* calculate turnaround in business hours in Tableau.
+Main issue at present: 10:58AM counts as 10AM */
+
+
+(if [start_time] > [end_time] then null
+else
+
+// week diff
+(int(datediff('week',[start_time],[end_time],'sunday'))*5)
+
+// weekday diff
+-
+case datepart('weekday',[end_time]) 
+when 1 then
+    if datepart('weekday',[start_time]) = 1 then 0
+    elseif datepart('weekday',[start_time]) = 2 then 1
+    elseif datepart('weekday',[start_time]) = 3 then 2
+    elseif datepart('weekday',[start_time]) = 4 then 3
+    elseif datepart('weekday',[start_time]) = 5 then 4
+    elseif datepart('weekday',[start_time]) = 6 then 5
+    elseif datepart('weekday',[start_time]) = 7 then 5
+    end
+when 2 then
+    if datepart('weekday',[start_time]) = 1 then -1
+    elseif datepart('weekday',[start_time]) = 2 then 0
+    elseif datepart('weekday',[start_time]) = 3 then 1
+    elseif datepart('weekday',[start_time]) = 4 then 2
+    elseif datepart('weekday',[start_time]) = 5 then 3
+    elseif datepart('weekday',[start_time]) = 6 then 4
+    elseif datepart('weekday',[start_time]) = 7 then 4
+    end 
+when 3 then
+    if datepart('weekday',[start_time]) = 1 then -2
+    elseif datepart('weekday',[start_time]) = 2 then -1
+    elseif datepart('weekday',[start_time]) = 3 then 0
+    elseif datepart('weekday',[start_time]) = 4 then 1
+    elseif datepart('weekday',[start_time]) = 5 then 2
+    elseif datepart('weekday',[start_time]) = 6 then 3
+    elseif datepart('weekday',[start_time]) = 7 then 3
+    end 
+when 4 then
+    if datepart('weekday',[start_time]) = 1 then -3
+    elseif datepart('weekday',[start_time]) = 2 then -2
+    elseif datepart('weekday',[start_time]) = 3 then -1
+    elseif datepart('weekday',[start_time]) = 4 then 0
+    elseif datepart('weekday',[start_time]) = 5 then 1
+    elseif datepart('weekday',[start_time]) = 6 then 2
+    elseif datepart('weekday',[start_time]) = 7 then 2
+    end 
+when 5 then
+    if datepart('weekday',[start_time]) = 1 then -4
+    elseif datepart('weekday',[start_time]) = 2 then -3
+    elseif datepart('weekday',[start_time]) = 3 then -2
+    elseif datepart('weekday',[start_time]) = 4 then -1
+    elseif datepart('weekday',[start_time]) = 5 then 0
+    elseif datepart('weekday',[start_time]) = 6 then 1
+    elseif datepart('weekday',[start_time]) = 7 then 1
+    end 
+when 6 then
+    if datepart('weekday',[start_time]) = 1 then -5
+    elseif datepart('weekday',[start_time]) = 2 then -4
+    elseif datepart('weekday',[start_time]) = 3 then -3
+    elseif datepart('weekday',[start_time]) = 4 then -2
+    elseif datepart('weekday',[start_time]) = 5 then -1
+    elseif datepart('weekday',[start_time]) = 6 then 0
+    elseif datepart('weekday',[start_time]) = 7 then 0
+    end 
+when 7 then
+    if datepart('weekday',[start_time]) = 1 then -5
+    elseif datepart('weekday',[start_time]) = 2 then -4
+    elseif datepart('weekday',[start_time]) = 3 then -3
+    elseif datepart('weekday',[start_time]) = 4 then -2
+    elseif datepart('weekday',[start_time]) = 5 then -1
+    elseif datepart('weekday',[start_time]) = 6 then 0
+    elseif datepart('weekday',[start_time]) = 7 then 0
+end end end)*8
+
+// start hour
++ 
+if datepart('hour',[start_time]) < 17 and datepart('hour',[start_time]) > 9 then 17 - datepart('hour',[start_time])
+elseif datepart('hour',[start_time]) <= 9 then 8
+elseif datepart('hour',[start_time]) >= 17 then 0 end
+
+// end hour
+- 
+if datepart('hour',[end_time]) < 17 and datepart('hour',[end_time]) > 9 then 17 - datepart('hour',[end_time])
+elseif datepart('hour',[end_time]) <= 9 then 8
+elseif datepart('hour',[end_time]) >= 17 then 0 end
+
+// holidays
+- if date(start_time) < date('2014-05-26') and date(end_time) >= date('2014-05-26') then 8 else 0 end
+- if date(start_time) < date('2014-07-04') and date(end_time) >= date('2014-07-04') then 8 else 0 end
+- if date(start_time) < date('2014-09-01') and date(end_time) >= date('2014-09-01') then 8 else 0 end
+- if date(start_time) < date('2014-11-27') and date(end_time) >= date('2014-11-27') then 8 else 0 end
+- if date(start_time) < date('2014-11-28') and date(end_time) >= date('2014-11-28') then 8 else 0 end
+- if date(start_time) < date('2014-12-24') and date(end_time) >= date('2014-12-24') then 8 else 0 end
+- if date(start_time) < date('2014-12-25') and date(end_time) >= date('2014-12-25') then 8 else 0 end
+- if date(start_time) < date('2015-01-01') and date(end_time) >= date('2015-01-01') then 8 else 0 end
