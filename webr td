@@ -3102,6 +3102,71 @@ from sandbox.edit_ir_load a
 
 
 
+drop table sandbox.edit_google_doc;
+create set table sandbox.edit_google_doc as (
+select
+	cast((case 
+			when index(week_start,'-') <> 0 
+				then null
+			when char_length(week_start) = 10 
+				then week_start
+			when char_length(week_start) = 9 and position('/' in week_start) = 2
+				then '0' || week_start
+			when char_length(week_start) = 9 and position('/' in week_start) = 3
+				then substr(week_start,1,3) || '0' || substr(week_start,4,9)
+			when char_length(week_start) = 8
+				then '0' || substr(week_start,1,2) || '0' || substr(week_start,3,8) else null end) as date format 'mm/dd/yyyy') as week_start,
+	cast(getaways_writer_hc as dec(7,3)) getaways_writer_hc,
+	cast(getaways_ae_hc as dec(7,3)) getaways_ae_hc,
+	cast(getaways_editor_hc as dec(7,3)) getaways_editor_hc,
+	cast(getaways_image_hc as dec(7,3)) getaways_image_hc,
+	cast(getaways_service_hc as dec(7,3)) getaways_service_hc,
+	cast(getaways_mgmt_hc as dec(7,3)) getaways_mgmt_hc,
+	cast(goods_writer_hc as dec(7,3)) goods_writer_hc,
+	cast(goods_ae_hc as dec(7,3)) goods_ae_hc,
+	cast(goods_editor_hc as dec(7,3)) goods_editor_hc,
+	cast(goods_image_hc as dec(7,3)) goods_image_hc,
+	cast(goods_service_hc as dec(7,3)) goods_service_hc,
+	cast(goods_mgmt_hc as dec(7,3)) goods_mgmt_hc,
+	cast(live_writer_hc as dec(7,3)) live_writer_hc,
+	cast(live_ae_hc as dec(7,3)) live_ae_hc,
+	cast(live_editor_hc as dec(7,3)) live_editor_hc,
+	cast(live_image_hc as dec(7,3)) live_image_hc,
+	cast(live_service_hc as dec(7,3)) live_service_hc,
+	cast(live_mgmt_hc as dec(7,3)) live_mgmt_hc,
+	cast(sc_writer_hc as dec(7,3)) sc_writer_hc,
+	cast(sc_ae_hc as dec(7,3)) sc_ae_hc,
+	cast(sc_editor_hc as dec(7,3)) sc_editor_hc,
+	cast(sc_image_hc as dec(7,3)) sc_image_hc,
+	cast(project_writer_hc as dec(7,3)) project_writer_hc,
+	cast(project_ae_hc as dec(7,3)) project_ae_hc,
+	cast(project_editor_hc as dec(7,3)) project_editor_hc,
+	cast(n_merchant_lists as int) n_merchant_lists,
+	cast(n_guide_articles as int) n_guide_articles,
+	cast(n_merchant_pages as int) n_merchant_pages,
+	cast(n_primers as int) n_primers,
+	cast(n_natl_guide as int) n_natl_guide,
+	cast(n_null_pages as int) n_null_pages,
+	cast(n_natl_seo_profiles as int) n_natl_seo_profiles,
+	cast(n_getaways_hotel_pages as int) n_getaways_hotel_pages,
+	cast(n_getaways_area_sections as int) n_getaways_area_sections,
+	cast(n_goods_video_complete as int) n_goods_video_complete,
+	cast(n_local_video_complete as int) n_local_video_complete,
+	cast(n_local_deals_covered as int) n_local_deals_covered,
+	cast(n_total_video_views as int) n_total_video_views,
+	cast(n_video_dropoff_rate as dec(10,4)) n_video_dropoff_rate
+from sandbox.edit_gdoc_load)
+with data primary index(week_start);
+
+
+
+
+
+
+
+
+
+
 drop table sandbox.edit_current_staff;
 create set table sandbox.edit_current_staff as (
 select
@@ -3187,125 +3252,24 @@ where country_code = 'USA'
 
 
 
-drop table sandbox.edit_google_doc;
-create set table sandbox.edit_google_doc as (
+insert into sandbox.edit_staffcount
 select
-	cast((case 
-			when index(week_start,'-') <> 0 
-				then null
-			when char_length(week_start) = 10 
-				then week_start
-			when char_length(week_start) = 9 and position('/' in week_start) = 2
-				then '0' || week_start
-			when char_length(week_start) = 9 and position('/' in week_start) = 3
-				then substr(week_start,1,3) || '0' || substr(week_start,4,9)
-			when char_length(week_start) = 8
-				then '0' || substr(week_start,1,2) || '0' || substr(week_start,3,8) else null end) as date format 'mm/dd/yyyy') as week_start,
-	cast(getaways_writer_hc as dec(7,3)) getaways_writer_hc,
-	cast(getaways_ae_hc as dec(7,3)) getaways_ae_hc,
-	cast(getaways_editor_hc as dec(7,3)) getaways_editor_hc,
-	cast(getaways_image_hc as dec(7,3)) getaways_image_hc,
-	cast(getaways_service_hc as dec(7,3)) getaways_service_hc,
-	cast(getaways_mgmt_hc as dec(7,3)) getaways_mgmt_hc,
-	cast(goods_writer_hc as dec(7,3)) goods_writer_hc,
-	cast(goods_ae_hc as dec(7,3)) goods_ae_hc,
-	cast(goods_editor_hc as dec(7,3)) goods_editor_hc,
-	cast(goods_image_hc as dec(7,3)) goods_image_hc,
-	cast(goods_service_hc as dec(7,3)) goods_service_hc,
-	cast(goods_mgmt_hc as dec(7,3)) goods_mgmt_hc,
-	cast(live_writer_hc as dec(7,3)) live_writer_hc,
-	cast(live_ae_hc as dec(7,3)) live_ae_hc,
-	cast(live_editor_hc as dec(7,3)) live_editor_hc,
-	cast(live_image_hc as dec(7,3)) live_image_hc,
-	cast(live_service_hc as dec(7,3)) live_service_hc,
-	cast(live_mgmt_hc as dec(7,3)) live_mgmt_hc,
-	cast(sc_writer_hc as dec(7,3)) sc_writer_hc,
-	cast(sc_ae_hc as dec(7,3)) sc_ae_hc,
-	cast(sc_editor_hc as dec(7,3)) sc_editor_hc,
-	cast(sc_image_hc as dec(7,3)) sc_image_hc,
-	cast(project_writer_hc as dec(7,3)) project_writer_hc,
-	cast(project_ae_hc as dec(7,3)) project_ae_hc,
-	cast(project_editor_hc as dec(7,3)) project_editor_hc,
-	cast(n_merchant_lists as int) n_merchant_lists,
-	cast(n_guide_articles as int) n_guide_articles,
-	cast(n_merchant_pages as int) n_merchant_pages,
-	cast(n_primers as int) n_primers,
-	cast(n_natl_guide as int) n_natl_guide,
-	cast(n_null_pages as int) n_null_pages,
-	cast(n_natl_seo_profiles as int) n_natl_seo_profiles,
-	cast(n_getaways_hotel_pages as int) n_getaways_hotel_pages,
-	cast(n_getaways_area_sections as int) n_getaways_area_sections,
-	cast(n_goods_video_complete as int) n_goods_video_complete,
-	cast(n_local_video_complete as int) n_local_video_complete,
-	cast(n_local_deals_covered as int) n_local_deals_covered,
-	cast(n_total_video_views as int) n_total_video_views,
-	cast(n_video_dropoff_rate as dec(10,4)) n_video_dropoff_rate
-from sandbox.edit_gdoc_load)
-with data primary index(week_start);
-
-
-
-
-
-
-
-
-
-
-create set table sandbox.edit_google_doc as (
-select
-	cast((case 
-			when index(week_start,'-') <> 0 
-				then null
-			when char_length(week_start) = 10 
-				then week_start
-			when char_length(week_start) = 9 and position('/' in week_start) = 2
-				then '0' || week_start
-			when char_length(week_start) = 9 and position('/' in week_start) = 3
-				then substr(week_start,1,3) || '0' || substr(week_start,4,9)
-			when char_length(week_start) = 8
-				then '0' || substr(week_start,1,2) || '0' || substr(week_start,3,8) else null end) as date format 'mm/dd/yyyy') as week_start,
-	cast(getaways_writer_hc as dec(7,3)) getaways_writer_hc,
-	cast(getaways_ae_hc as dec(7,3)) getaways_ae_hc,
-	cast(getaways_editor_hc as dec(7,3)) getaways_editor_hc,
-	cast(getaways_image_hc as dec(7,3)) getaways_image_hc,
-	cast(getaways_service_hc as dec(7,3)) getaways_service_hc,
-	cast(getaways_mgmt_hc as dec(7,3)) getaways_mgmt_hc,
-	cast(goods_writer_hc as dec(7,3)) goods_writer_hc,
-	cast(goods_ae_hc as dec(7,3)) goods_ae_hc,
-	cast(goods_editor_hc as dec(7,3)) goods_editor_hc,
-	cast(goods_image_hc as dec(7,3)) goods_image_hc,
-	cast(goods_service_hc as dec(7,3)) goods_service_hc,
-	cast(goods_mgmt_hc as dec(7,3)) goods_mgmt_hc,
-	cast(live_writer_hc as dec(7,3)) live_writer_hc,
-	cast(live_ae_hc as dec(7,3)) live_ae_hc,
-	cast(live_editor_hc as dec(7,3)) live_editor_hc,
-	cast(live_image_hc as dec(7,3)) live_image_hc,
-	cast(live_service_hc as dec(7,3)) live_service_hc,
-	cast(live_mgmt_hc as dec(7,3)) live_mgmt_hc,
-	cast(sc_writer_hc as dec(7,3)) sc_writer_hc,
-	cast(sc_ae_hc as dec(7,3)) sc_ae_hc,
-	cast(sc_editor_hc as dec(7,3)) sc_editor_hc,
-	cast(sc_image_hc as dec(7,3)) sc_image_hc,
-	cast(project_writer_hc as dec(7,3)) project_writer_hc,
-	cast(project_ae_hc as dec(7,3)) project_ae_hc,
-	cast(project_editor_hc as dec(7,3)) project_editor_hc,
-	cast(n_merchant_lists as int) n_merchant_lists,
-	cast(n_guide_articles as int) n_guide_articles,
-	cast(n_merchant_pages as int) n_merchant_pages,
-	cast(n_primers as int) n_primers,
-	cast(n_natl_guide as int) n_natl_guide,
-	cast(n_null_pages as int) n_null_pages,
-	cast(n_natl_seo_profiles as int) n_natl_seo_profiles,
-	cast(n_getaways_hotel_pages as int) n_getaways_hotel_pages,
-	cast(n_getaways_area_sections as int) n_getaways_area_sections,
-	cast(n_goods_video_complete as int) n_goods_video_complete,
-	cast(n_local_video_complete as int) n_local_video_complete,
-	cast(n_local_deals_covered as int) n_local_deals_covered,
-	cast(n_total_video_views as int) n_total_video_views,
-	cast(n_video_dropoff_rate as dec(10,4)) n_video_dropoff_rate
-from sandbox.edit_gdoc_load)
-with data primary index(week_start);
+	cast(c.week_start as date) week_start,
+	cast(c.week_end as date) week_end,
+	sum(case when stage = 'CC' then 1 else 0 end) n_dc,
+	sum(case when stage = 'Writer' then 1 else 0 end) n_writer,
+	sum(case when stage = 'Editor' then 1 else 0 end) n_editor,
+	sum(case when stage = 'Image' or stage = 'ISE' then 1 else 0 end) n_image,
+	sum(case when stage = 'SE' then 1 else 0 end) n_se,
+	sum(case when stage = 'Video' then 1 else 0 end) n_video,
+	sum(case when stage = 'Ops' then 1 else 0 end) n_ops,
+	sum(case when stage = 'Management' then 1 else 0 end) n_mgmt
+from sandbox.edit_current_staff a
+join user_groupondw.dim_day b
+	on current_date = day_rw
+join user_groupondw.dim_week c
+	on b.week_key = c.week_key
+group by 1,2;
 
 
 
