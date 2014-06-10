@@ -1,3 +1,25 @@
+/*
+Before running this:
+
+1.
+download SF -- https://na8.salesforce.com/00OC0000005NnwQ
+download ZD -- https://grouhelpon.zendesk.com/reports#export
+download IR -- https://na8.salesforce.com/00OC0000005nrch
+download HR -- http://hris.group.on/w
+download GD -- https://docs.google.com/a/groupon.com/spreadsheets/d/1RHs32_2KVx-Du6dQhULqR91B8-rkjbZ7noZEU8Wp-Ew/edit#gid=0
+
+2. clean/load those files
+
+3. run these in Teradata
+delete from sandbox.edit_sf where cast(deal_vette_time at time zone 'America Central' as date) >= [[First Export Date]]
+delete from sandbox.edit_zd where cast(created_at at time zone 'America Central' as date) >= [[First Export Date]]
+delete from sandbox.edit_info_req where cast(requested_ts at time zone 'America Central' as date) >= [[First Export Date]]
+*/
+
+
+
+
+
 insert into sandbox.edit_sf
 	select
 	deal_key,
@@ -3323,3 +3345,272 @@ left join sandbox.edit_google_doc b
 	on a.week_start = b.week_start
 where a.week_start between '2012-11-15' and current_date - 7)
 with data primary index(week_start);
+
+
+
+
+
+
+
+
+
+
+drop table sandbox.edit_dealcount;
+create set table sandbox.edit_dealcount as (
+	select
+	deal_key,
+	opportunity_id,
+	sf.permalink,
+	channel,
+	refeature,
+	stps,
+	category_v3,
+	writeup,
+	image_path,
+	dq_name,
+	cc_name,
+	writer_name,
+	editor_name,
+	image_name,
+	qa_ts deal_setup_done,
+	deal_vette_time,
+	cc_ts cc_timestamp,
+	writer_ts writer_timestamp,
+	editor_ts editor_timestamp,
+	image_ts image_timestamp,
+	merchant_interview,
+	interview_requested merchant_interview_requested,
+	deal_vette_date,
+	edit_setup_date deal_setup_date,
+	go_live_date,
+	sum(editorial_errors) editorial_errors,
+	sum(egregious_errors) egregious_errors,
+	count(distinct ticket_id) n_tickets,
+	count(distinct(case when image_or_copy = 'Copy' then ticket_id end)) n_copy_tickets,
+	count(distinct(case when image_or_copy = 'Image' then ticket_id end)) n_image_tickets,
+	0 n_auto_tickets
+
+	from sandbox.edit_sf sf
+	left join (
+		select
+			permalink,
+			ticket_id,
+			image_or_copy,
+			root_one root,
+			case when fault_one in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+			case when fault_one in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+		from sandbox.edit_zd
+
+		union all
+
+		select
+			permalink,
+			ticket_id,
+			'     ' image_or_copy,
+			root_one root,
+			case when fault_two in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+			case when fault_two in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+		from sandbox.edit_zd
+
+		union all
+
+		select
+			permalink,
+			ticket_id,
+			'     ' image_or_copy,
+			root_one root,
+			case when fault_three in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+			case when fault_three in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+		from sandbox.edit_zd
+
+		union all
+
+		select
+			permalink,
+			ticket_id,
+			'     ' image_or_copy,
+			root_one root,
+			case when fault_four in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+			case when fault_four in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+		from sandbox.edit_zd
+
+		union all
+
+		select
+			permalink,
+			ticket_id,
+			'     ' image_or_copy,
+			root_one root,
+			case when fault_five in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+			case when fault_five in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+		from sandbox.edit_zd
+
+		union all
+
+		select
+			permalink,
+			ticket_id,
+			'     ' image_or_copy,
+			root_one root,
+			case when livefault_one in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+			case when livefault_one in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+		from sandbox.edit_zd
+
+		union all
+
+		select
+			permalink,
+			ticket_id,
+			'     ' image_or_copy,
+			root_one root,
+			case when livefault_two in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+			case when livefault_two in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+		from sandbox.edit_zd
+
+		union all
+
+		select
+			permalink,
+			ticket_id,
+			'     ' image_or_copy,
+			root_one root,
+			case when livefault_three in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+			case when livefault_three in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+		from sandbox.edit_zd) zd
+	on sf.permalink = zd.permalink
+
+	group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,31
+) with data primary index(deal_key),
+index(opportunity_id),
+index(permalink);
+
+
+
+
+
+
+
+
+
+
+drop table sandbox.edit_errors;
+create set table sandbox.edit_errors as (
+select
+	a.deal_key,
+	a.permalink,
+	a.opportunity_id,
+	a.channel,
+	a.refeature,
+	a.stps,
+	a.category_v3,
+	a.writeup,
+	a.image_path,
+	a.edit_setup_date deal_setup_date,
+	a.go_live_date,
+	a.deal_vette_date,
+	z.created_date,
+	a.dq_name,
+	a.cc_name,
+	a.writer_name,
+	a.editor_name,
+	a.image_name,
+	z.ticket_id,
+	z.requester_dept submitter_dept,
+	z.root,
+	z.fault,
+	split_part(z.root,'::',1) ticket_category
+
+from sandbox.edit_sf a
+left join (select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				root_one root,
+				fault_one fault
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				root_two root,
+				fault_two
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				root_three root,
+				fault_three fault
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				root_four root,
+				fault_four fault
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				root_five root,
+				fault_five fault
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				liveroot_one root,
+				liveroot_one fault
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				liveroot_two root,
+				livefault_two fault
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				liveroot_three root,
+				livefault_three fault
+			from sandbox.edit_zd) z
+	on a.permalink = z.permalink
+) with data primary index(deal_key), 
+index(permalink), 
+index(opportunity_id),
+index(deal_setup_date),
+index(go_live_date);
+
+
