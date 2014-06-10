@@ -1,4 +1,15 @@
 drop table sandbox.edit_sf_load;
+drop table sandbox.edit_zd_load;
+drop table sandbox.edit_ir_load;
+drop table sandbox.edit_gdoc_load;
+drop table sandbox.edit_hr_workers_load;
+drop table sandbox.edit_cost_load;
+
+
+
+
+
+
 create set table sandbox.edit_sf_load (
 	opportunity_id varchar(18) character set unicode casespecific,
 	deal_creator varchar(30) character set unicode casespecific,
@@ -17,7 +28,6 @@ create set table sandbox.edit_sf_load (
 	goods_deal_source varchar(25) character set unicode casespecific,
 	video varchar(20) character set unicode casespecific
 ) unique primary index(opportunity_id);
-drop table sandbox.edit_zd_load;
 create multiset table sandbox.edit_zd_load (
 	ticket_id varchar(8) not null,
 	requester varchar(50) character set unicode casespecific,
@@ -56,15 +66,6 @@ create multiset table sandbox.edit_zd_load (
 	office varchar(35) character set unicode casespecific,
 	region varchar(7) character set unicode casespecific
 ) unique primary index(ticket_id);
-drop table sandbox.edit_hr_workers_load;
-create multiset table sandbox.edit_hr_workers_load (
-	employee_name varchar(60) character set unicode casespecific,
-	business_title varchar(50) character set unicode casespecific,
-	country_code varchar(5) character set unicode casespecific,
-	cost_center varchar(100) character set unicode casespecific,
-	supervisor_name varchar(50) character set unicode casespecific
-) unique primary index(employee_name);
-drop table sandbox.edit_ir_load;
 create multiset table sandbox.edit_ir_load (
 	ir_id varchar(20) character set unicode casespecific,
 	opportunity_id varchar(20) character set unicode casespecific,
@@ -78,7 +79,6 @@ create multiset table sandbox.edit_ir_load (
 	status varchar(20) character set unicode casespecific,
 	uir varchar(4) character set unicode casespecific
 ) unique primary index(ir_id);
-drop table sandbox.edit_gdoc_load;
 create multiset table sandbox.edit_gdoc_load (
 	week_start varchar(18) not null,
 	getaways_writer_hc varchar(10) character set unicode casespecific,
@@ -121,7 +121,13 @@ create multiset table sandbox.edit_gdoc_load (
 	n_total_video_views varchar(10) character set unicode casespecific,
 	n_video_dropoff_rate varchar(10) character set unicode casespecific
 ) unique primary index(week_start);
-drop table sandbox.edit_cost_load;
+create multiset table sandbox.edit_hr_workers_load (
+	employee_name varchar(60) character set unicode casespecific,
+	business_title varchar(50) character set unicode casespecific,
+	country_code varchar(5) character set unicode casespecific,
+	cost_center varchar(100) character set unicode casespecific,
+	supervisor_name varchar(50) character set unicode casespecific
+) unique primary index(employee_name);
 create set table sandbox.edit_cost_load (
 	period_start varchar(20) character set unicode casespecific,
 	period_end varchar(20) character set unicode casespecific,
