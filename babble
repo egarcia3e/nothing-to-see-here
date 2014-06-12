@@ -110,10 +110,14 @@ left join (select ticket_id,
 				liveroot_three root,
 				livefault_three fault
 			from sandbox.edit_zd) z
-	on a.permalink = z.permalink;
+	on a.permalink = z.permalink
+where created_date >= date - 365
 	
-	--replacement for the dealcount datasource
-	select
+	
+	
+	
+--replacement for the dealcount datasource
+select
 	a.permalink,
 	a.channel,
 	a.writeup,
