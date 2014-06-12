@@ -2,7 +2,7 @@
 Main issue at present: 10:58AM counts as 10AM */
 
 
-avg(if [start_time] > [end_time] then null
+if [start_time] > [end_time] then null
 else
 
 // week diff
@@ -105,4 +105,4 @@ elseif datepart('hour',[end_time]) >= 17 then 0 end
 - if date([start_time]) < date('2014-12-24') and date([end_time]) >= date('2014-12-24') then 8 else 0 end
 - if date([start_time]) < date('2014-12-25') and date([end_time]) >= date('2014-12-25') then 8 else 0 end
 - if date([start_time]) < date('2015-01-01') and date([end_time]) >= date('2015-01-01') then 8 else 0 end 
-end)
+end
