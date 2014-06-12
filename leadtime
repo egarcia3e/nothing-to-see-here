@@ -1,0 +1,86 @@
+if [start_date] > [end_date] then null
+else
+(int(datediff('week',[start_date],[end_date],'sunday'))*5)
+-
+case datepart('weekday',[end_date]) 
+when 1 then
+    if datepart('weekday',[start_date]) = 1 then 0
+    elseif datepart('weekday',[start_date]) = 2 then 1
+    elseif datepart('weekday',[start_date]) = 3 then 2
+    elseif datepart('weekday',[start_date]) = 4 then 3
+    elseif datepart('weekday',[start_date]) = 5 then 4
+    elseif datepart('weekday',[start_date]) = 6 then 5
+    elseif datepart('weekday',[start_date]) = 7 then 5
+    end
+when 2 then
+    if datepart('weekday',[start_date]) = 1 then -1
+    elseif datepart('weekday',[start_date]) = 2 then 0
+    elseif datepart('weekday',[start_date]) = 3 then 1
+    elseif datepart('weekday',[start_date]) = 4 then 2
+    elseif datepart('weekday',[start_date]) = 5 then 3
+    elseif datepart('weekday',[start_date]) = 6 then 4
+    elseif datepart('weekday',[start_date]) = 7 then 4
+    end 
+when 3 then
+    if datepart('weekday',[start_date]) = 1 then -2
+    elseif datepart('weekday',[start_date]) = 2 then -1
+    elseif datepart('weekday',[start_date]) = 3 then 0
+    elseif datepart('weekday',[start_date]) = 4 then 1
+    elseif datepart('weekday',[start_date]) = 5 then 2
+    elseif datepart('weekday',[start_date]) = 6 then 3
+    elseif datepart('weekday',[start_date]) = 7 then 3
+    end 
+when 4 then
+    if datepart('weekday',[start_date]) = 1 then -3
+    elseif datepart('weekday',[start_date]) = 2 then -2
+    elseif datepart('weekday',[start_date]) = 3 then -1
+    elseif datepart('weekday',[start_date]) = 4 then 0
+    elseif datepart('weekday',[start_date]) = 5 then 1
+    elseif datepart('weekday',[start_date]) = 6 then 2
+    elseif datepart('weekday',[start_date]) = 7 then 2
+    end 
+when 5 then
+    if datepart('weekday',[start_date]) = 1 then -4
+    elseif datepart('weekday',[start_date]) = 2 then -3
+    elseif datepart('weekday',[start_date]) = 3 then -2
+    elseif datepart('weekday',[start_date]) = 4 then -1
+    elseif datepart('weekday',[start_date]) = 5 then 0
+    elseif datepart('weekday',[start_date]) = 6 then 1
+    elseif datepart('weekday',[start_date]) = 7 then 1
+    end 
+when 6 then
+    if datepart('weekday',[start_date]) = 1 then -5
+    elseif datepart('weekday',[start_date]) = 2 then -4
+    elseif datepart('weekday',[start_date]) = 3 then -3
+    elseif datepart('weekday',[start_date]) = 4 then -2
+    elseif datepart('weekday',[start_date]) = 5 then -1
+    elseif datepart('weekday',[start_date]) = 6 then 0
+    elseif datepart('weekday',[start_date]) = 7 then 0
+    end 
+when 7 then
+    if datepart('weekday',[start_date]) = 1 then -5
+    elseif datepart('weekday',[start_date]) = 2 then -4
+    elseif datepart('weekday',[start_date]) = 3 then -3
+    elseif datepart('weekday',[start_date]) = 4 then -2
+    elseif datepart('weekday',[start_date]) = 5 then -1
+    elseif datepart('weekday',[start_date]) = 6 then 0
+    elseif datepart('weekday',[start_date]) = 7 then 0
+end end
+- if [start_date] < date('2013-01-01') and [end_date] >= date('2013-01-01') then 8 else 0 end
+- if [start_date] < date('2013-05-27') and [end_date] >= date('2013-05-27') then 8 else 0 end
+- if [start_date] < date('2013-07-04') and [end_date] >= date('2013-07-04') then 8 else 0 end
+- if [start_date] < date('2013-09-02') and [end_date] >= date('2013-09-02') then 8 else 0 end
+- if [start_date] < date('2013-11-28') and [end_date] >= date('2013-11-28') then 8 else 0 end
+- if [start_date] < date('2013-11-29') and [end_date] >= date('2013-11-29') then 8 else 0 end
+- if [start_date] < date('2013-12-24') and [end_date] >= date('2013-12-24') then 8 else 0 end
+- if [start_date] < date('2013-12-25') and [end_date] >= date('2013-12-25') then 8 else 0 end
+- if [start_date] < date('2014-01-01') and [end_date] >= date('2014-01-01') then 8 else 0 end
+- if [start_date] < date('2014-05-26') and [end_date] >= date('2014-05-26') then 8 else 0 end
+- if [start_date] < date('2014-07-04') and [end_date] >= date('2014-07-04') then 8 else 0 end
+- if [start_date] < date('2014-09-01') and [end_date] >= date('2014-09-01') then 8 else 0 end
+- if [start_date] < date('2014-11-27') and [end_date] >= date('2014-11-27') then 8 else 0 end
+- if [start_date] < date('2014-11-28') and [end_date] >= date('2014-11-28') then 8 else 0 end
+- if [start_date] < date('2014-12-24') and [end_date] >= date('2014-12-24') then 8 else 0 end
+- if [start_date] < date('2014-12-25') and [end_date] >= date('2014-12-25') then 8 else 0 end
+- if [start_date] < date('2015-01-01') and [end_date] >= date('2015-01-01') then 8 else 0 end
+ end
