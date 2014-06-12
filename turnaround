@@ -88,11 +88,21 @@ elseif datepart('hour',[end_time]) <= 9 then 8
 elseif datepart('hour',[end_time]) >= 17 then 0 end
 
 // holidays
-- if date(start_time) < date('2014-05-26') and date(end_time) >= date('2014-05-26') then 8 else 0 end
-- if date(start_time) < date('2014-07-04') and date(end_time) >= date('2014-07-04') then 8 else 0 end
-- if date(start_time) < date('2014-09-01') and date(end_time) >= date('2014-09-01') then 8 else 0 end
-- if date(start_time) < date('2014-11-27') and date(end_time) >= date('2014-11-27') then 8 else 0 end
-- if date(start_time) < date('2014-11-28') and date(end_time) >= date('2014-11-28') then 8 else 0 end
-- if date(start_time) < date('2014-12-24') and date(end_time) >= date('2014-12-24') then 8 else 0 end
-- if date(start_time) < date('2014-12-25') and date(end_time) >= date('2014-12-25') then 8 else 0 end
-- if date(start_time) < date('2015-01-01') and date(end_time) >= date('2015-01-01') then 8 else 0 end end)
+- if [start_date] < date('2013-01-01') and [end_date] >= date('2013-01-01') then 8 else 0 end
+- if [start_date] < date('2013-05-27') and [end_date] >= date('2013-05-27') then 8 else 0 end
+- if [start_date] < date('2013-07-04') and [end_date] >= date('2013-07-04') then 8 else 0 end
+- if [start_date] < date('2013-09-02') and [end_date] >= date('2013-09-02') then 8 else 0 end
+- if [start_date] < date('2013-11-28') and [end_date] >= date('2013-11-28') then 8 else 0 end
+- if [start_date] < date('2013-11-29') and [end_date] >= date('2013-11-29') then 8 else 0 end
+- if [start_date] < date('2013-12-24') and [end_date] >= date('2013-12-24') then 8 else 0 end
+- if [start_date] < date('2013-12-25') and [end_date] >= date('2013-12-25') then 8 else 0 end
+- if [start_date] < date('2014-01-01') and [end_date] >= date('2014-01-01') then 8 else 0 end
+- if [start_date] < date('2014-05-26') and [end_date] >= date('2014-05-26') then 8 else 0 end
+- if [start_date] < date('2014-07-04') and [end_date] >= date('2014-07-04') then 8 else 0 end
+- if [start_date] < date('2014-09-01') and [end_date] >= date('2014-09-01') then 8 else 0 end
+- if [start_date] < date('2014-11-27') and [end_date] >= date('2014-11-27') then 8 else 0 end
+- if [start_date] < date('2014-11-28') and [end_date] >= date('2014-11-28') then 8 else 0 end
+- if [start_date] < date('2014-12-24') and [end_date] >= date('2014-12-24') then 8 else 0 end
+- if [start_date] < date('2014-12-25') and [end_date] >= date('2014-12-25') then 8 else 0 end
+- if [start_date] < date('2015-01-01') and [end_date] >= date('2015-01-01') then 8 else 0 end 
+end)
