@@ -1,0 +1,282 @@
+-- replacement for the errors datasource
+select
+	a.deal_key,
+	a.permalink,
+	a.opportunity_id,
+	a.channel,
+	a.refeature,
+	a.stps,
+	a.category_v3,
+	a.writeup,
+	a.image_path,
+	a.edit_setup_date deal_setup_date,
+	a.go_live_date,
+	a.deal_vette_date,
+	z.created_date,
+	a.dq_name,
+	a.cc_name,
+	a.writer_name,
+	a.editor_name,
+	a.image_name,
+	z.ticket_id,
+	z.requester_dept submitter_dept,
+	z.root,
+	z.fault,
+	split_part(z.root,'::',1) ticket_category
+
+from sandbox.edit_sf a
+left join (select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				root_one root,
+				fault_one fault
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				root_two root,
+				fault_two
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				root_three root,
+				fault_three fault
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				root_four root,
+				fault_four fault
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				root_five root,
+				fault_five fault
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				liveroot_one root,
+				liveroot_one fault
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				liveroot_two root,
+				livefault_two fault
+			from sandbox.edit_zd
+
+			union all
+
+			select ticket_id,
+				permalink,
+				cast(created_at at time zone 'America Central' as date) created_date,
+				image_or_copy,
+				requester_dept,
+				liveroot_three root,
+				livefault_three fault
+			from sandbox.edit_zd) z
+	on a.permalink = z.permalink;
+	
+	--replacement for the dealcount datasource
+	select
+	a.permalink,
+	a.channel,
+	a.writeup,
+	a.stps,
+	a.refeature,
+	a.image_path,
+	a.merchant_interview,
+	a.merchant_interview_requested,
+	b.deal_vette_time at time zone 'America Central' deal_vette_time,
+	c.sure_thing_time at time zone 'America Central' sure_thing_time,
+	a.cc_timestamp at time zone 'America Central' cc_setup_time,
+	a.writer_timestamp at time zone 'America Central' writer_setup_time,
+	a.editor_timestamp at time zone 'America Central' editor_setup_time,
+	a.image_timestamp at time zone 'America Central' image_setup_time,
+	b.final_copy_edit at time zone 'America Central' deal_setup_time,
+	b.dq_rec at time zone 'America Central' recommended_time,
+	a.go_live_date,
+	a.deal_setup_date,
+	d.gross_bookings,
+	d.order_count,
+	a.n_tickets,
+	a.editorial_errors,
+	a.egregious_errors
+from (select
+			deal_key,
+			opportunity_id,
+			sf.permalink,
+			channel,
+			refeature,
+			stps,
+			category_v3,
+			writeup,
+			image_path,
+			dq_name,
+			cc_name,
+			writer_name,
+			editor_name,
+			image_name,
+			qa_ts deal_setup_done,
+			deal_vette_time,
+			cc_ts cc_timestamp,
+			writer_ts writer_timestamp,
+			editor_ts editor_timestamp,
+			image_ts image_timestamp,
+			merchant_interview,
+			interview_requested merchant_interview_requested,
+			deal_vette_date,
+			edit_setup_date deal_setup_date,
+			go_live_date,
+			sum(editorial_errors) editorial_errors,
+			sum(egregious_errors) egregious_errors,
+			count(distinct ticket_id) n_tickets,
+			count(distinct(case when image_or_copy = 'Copy' then ticket_id end)) n_copy_tickets,
+			count(distinct(case when image_or_copy = 'Image' then ticket_id end)) n_image_tickets,
+			0 n_auto_tickets
+
+			from sandbox.edit_sf sf
+			left join (
+				select
+					permalink,
+					ticket_id,
+					image_or_copy,
+					root_one root,
+					case when fault_one in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+					case when fault_one in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+				from sandbox.edit_zd
+
+				union all
+
+				select
+					permalink,
+					ticket_id,
+					'     ' image_or_copy,
+					root_one root,
+					case when fault_two in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+					case when fault_two in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+				from sandbox.edit_zd
+
+				union all
+
+				select
+					permalink,
+					ticket_id,
+					'     ' image_or_copy,
+					root_one root,
+					case when fault_three in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+					case when fault_three in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+				from sandbox.edit_zd
+
+				union all
+
+				select
+					permalink,
+					ticket_id,
+					'     ' image_or_copy,
+					root_one root,
+					case when fault_four in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+					case when fault_four in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+				from sandbox.edit_zd
+
+				union all
+
+				select
+					permalink,
+					ticket_id,
+					'     ' image_or_copy,
+					root_one root,
+					case when fault_five in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+					case when fault_five in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+				from sandbox.edit_zd
+
+				union all
+
+				select
+					permalink,
+					ticket_id,
+					'     ' image_or_copy,
+					root_one root,
+					case when livefault_one in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+					case when livefault_one in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+				from sandbox.edit_zd
+
+				union all
+
+				select
+					permalink,
+					ticket_id,
+					'     ' image_or_copy,
+					root_one root,
+					case when livefault_two in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+					case when livefault_two in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+				from sandbox.edit_zd
+
+				union all
+
+				select
+					permalink,
+					ticket_id,
+					'     ' image_or_copy,
+					root_one root,
+					case when livefault_three in ('Editor','Egregious Editor','Image Designer','Egregious Image Designer','Image Site Editor','Egregious Image Site Editor','Writer','Egregious Writer','Egregious Site Editor') then 1 else 0 end editorial_errors,
+					case when livefault_three in ('Egregious Editor','Egregious Image Designer','Egregious Image Site Editor','Egregious Site Editor','Egregious Writer') then 1 else 0 end egregious_errors
+				from sandbox.edit_zd) zd
+			on sf.permalink = zd.permalink
+
+			where clone_flag <> 1
+			and writeup not in ('Other')
+			and channel not in ('National','G-Team')
+
+			group by 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,31) a
+left join user_groupondw.dim_opportunity b
+	on a.opportunity_id = b.opportunity_id
+left join (select substr(opportunity_id,1,15) opportunity_id, 
+				max(created_date) sure_thing_time
+			from user_groupondw.opportunity_field_history
+			where field = 'Deal_Strengh__c'
+				and new_value = 'A Sure Thing'
+			group by 1) c
+	on a.opportunity_id = c.opportunity_id
+left join (select deal_key,
+				sum(booked_net_revenue_amount) gross_bookings,
+				count(distinct order_id) order_count
+			from dw.v_fact_collections
+			group by 1) d
+	on a.deal_key = d.deal_key
+where a.deal_setup_date >= current_date - 365
