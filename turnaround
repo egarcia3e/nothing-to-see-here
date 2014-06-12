@@ -84,6 +84,7 @@ elseif datepart('hour',[start_time]) >= 17 then 0 end
 // end hour
 - 
 if datepart('hour',[end_time]) < 17 and datepart('hour',[end_time]) > 9 then 17 - datepart('hour',[end_time])
+elseif datepart('hour',[end_time]) <= 9 and datepart('hour',[start_time]) >= 17 then 0
 elseif datepart('hour',[end_time]) <= 9 then 8
 elseif datepart('hour',[end_time]) >= 17 then 0 end
 
