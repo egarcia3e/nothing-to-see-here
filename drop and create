@@ -119,7 +119,9 @@ create multiset table sandbox.edit_gdoc_load (
 	n_local_video_complete varchar(10) character set unicode casespecific,
 	n_local_deals_covered varchar(10) character set unicode casespecific,
 	n_total_video_views varchar(10) character set unicode casespecific,
-	n_video_dropoff_rate varchar(10) character set unicode casespecific
+	n_video_dropoff_rate varchar(10) character set unicode casespecific,
+	n_studio_shots varchar(10) character set unicode casespecific,
+	n_studio_shoots varchar(10) character set unicode casespecific
 ) unique primary index(week_start);
 create multiset table sandbox.edit_hr_workers_load (
 	employee_name varchar(60) character set unicode casespecific,
