@@ -3177,6 +3177,8 @@ select
 	cast(n_local_deals_covered as int) n_local_deals_covered,
 	cast(n_total_video_views as int) n_total_video_views,
 	cast(n_video_dropoff_rate as dec(10,4)) n_video_dropoff_rate
+	cast(n_studio_shots as int) n_studio_shots,
+	cast(n_studio_shoots as int) n_studio_shoots
 from sandbox.edit_gdoc_load)
 with data primary index(week_start);
 
