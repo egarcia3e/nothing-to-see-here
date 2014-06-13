@@ -1,0 +1,228 @@
+-- for data loader
+create set table sandbox.edit_cost_load (
+	period_start varchar(20) character set unicode casespecific,
+	period_end varchar(20) character set unicode casespecific,
+	pay_date varchar(20) character set unicode casespecific,
+	gross_pay_dc varchar(20) character set unicode casespecific,
+	gross_pay_editor varchar(20) character set unicode casespecific,
+	gross_pay_image varchar(20) character set unicode casespecific,
+	gross_pay_mgmt varchar(20) character set unicode casespecific,
+	gross_pay_ops varchar(20) character set unicode casespecific,
+	gross_pay_se varchar(20) character set unicode casespecific,
+	gross_pay_video varchar(20) character set unicode casespecific,
+	gross_pay_writer varchar(20) character set unicode casespecific
+) primary index(period_start), index(period_end);
+
+
+
+
+
+
+
+-- convert headcount to daily
+
+
+create set table sandbox.edit_daily_hc as (
+select
+	week_start,
+	week_start - 1 + row_number() over (partition by week_start order by week_start) day_rw,
+	n_dc,
+	n_editor,
+	n_image,
+	n_mgmt,
+	n_ops,
+	n_se,
+	n_video,
+	n_writer,
+	local_writer,
+	local_editor,
+	local_image,
+	local_services,
+	local_mgmt,
+	goods_writer,
+	goods_editor,
+	goods_image,
+	goods_services,
+	goods_mgmt,
+	getaways_writer,
+	getaways_editor,
+	getaways_image,
+	getaways_services,
+	getaways_mgmt,
+	live_writer,
+	live_editor,
+	live_image,
+	live_services,
+	live_mgmt,
+	sc_writer,
+	sc_editor,
+	sc_image, 
+	project_writer, 
+	project_editor
+from (select
+		cast(a.week_start as date) week_start,
+		n_dc,
+		n_editor,
+		n_image,
+		n_mgmt,
+		n_ops,
+		n_se,
+		n_video,
+		n_writer,
+		local_writer,
+		local_editor,
+		local_image,
+		local_services,
+		local_mgmt,
+		goods_writer,
+		goods_editor,
+		goods_image,
+		goods_services,
+		goods_mgmt,
+		getaways_writer,
+		getaways_editor,
+		getaways_image,
+		getaways_services,
+		getaways_mgmt,
+		live_writer,
+		live_editor,
+		live_image,
+		live_services,
+		live_mgmt,
+		sc_writer,
+		sc_editor,
+		sc_image, 
+		project_writer, 
+		project_editor
+	from user_groupondw.dim_week a
+	join sandbox.edit_staffcount b
+		on cast(a.week_start as date) = b.week_start
+	join sandbox.edit_headcount c
+		on b.week_start = c.week_start
+	expand on period(a.week_start,a.week_end) week_period by interval '1' day) a
+) with data primary index(day_rw);
+
+
+
+
+
+-- convert averages to daily
+
+create set table sandbox.edit_daily_avg_cost as (
+	select
+		a.day_rw,
+		pay_date,
+		daily_gross_dc / n_dc daily_avg_dc,
+		daily_gross_editor / n_editor daily_avg_editor,
+		daily_gross_image / n_image daily_avg_image,
+		daily_gross_mgmt / n_mgmt daily_avg_mgmt,
+		case 
+			when pay_date <= '2014-03-31' then daily_gross_ops / (n_ops + n_video)
+			else daily_gross_ops / n_ops end daily_avg_ops,
+		daily_gross_se / n_se daily_avg_se,
+		case 
+			when pay_date <= '2014-03-31' then null
+			else daily_gross_video / n_video end daily_avg_video,
+		daily_gross_writer / n_writer daily_avg_writer
+
+	from (select
+				period_start - 1 + row_number() over (partition by period_start order by period_start) day_rw,
+				pay_date,
+				gross_pay_dc / cast(period_end - period_start + 1 as dec(15,2)) daily_gross_dc,
+				gross_pay_editor / cast(period_end - period_start + 1 as dec(15,2)) daily_gross_editor,
+				gross_pay_image / cast(period_end - period_start + 1 as dec(15,2)) daily_gross_image,
+				gross_pay_mgmt / cast(period_end - period_start + 1 as dec(15,2)) daily_gross_mgmt,
+				gross_pay_ops / cast(period_end - period_start + 1 as dec(15,2)) daily_gross_ops,
+				gross_pay_se / cast(period_end - period_start + 1 as dec(15,2)) daily_gross_se,
+				gross_pay_video / cast(period_end - period_start + 1 as dec(15,2)) daily_gross_video,
+				gross_pay_writer / cast(period_end - period_start + 1 as dec(15,2)) daily_gross_writer
+
+			from (select *
+				from (select
+						cast((case 
+							when index(period_start,'-') <> 0 
+					        then null
+							when char_length(period_start) = 10 
+					        then period_start
+							when char_length(period_start) = 9 and position('/' in period_start) = 2
+					        then '0' || period_start
+							when char_length(period_start) = 9 and position('/' in period_start) = 3
+					        then substr(period_start,1,3) || '0' || substr(period_start,4,9)
+							when char_length(period_start) = 8
+					        then '0' || substr(period_start,1,2) || '0' || substr(period_start,3,8) else null end) as date format 'mm/dd/yyyy') period_start,
+					    cast((case 
+							when index(period_end,'-') <> 0 
+					        then null
+							when char_length(period_end) = 10 
+					        then period_end
+							when char_length(period_end) = 9 and position('/' in period_end) = 2
+					        then '0' || period_end
+							when char_length(period_end) = 9 and position('/' in period_end) = 3
+					        then substr(period_end,1,3) || '0' || substr(period_end,4,9)
+							when char_length(period_end) = 8
+					        then '0' || substr(period_end,1,2) || '0' || substr(period_end,3,8) else null end) as date format 'mm/dd/yyyy') period_end,
+					   	cast((case 
+							when index(pay_date,'-') <> 0 
+					        then null
+							when char_length(pay_date) = 10 
+					        then pay_date
+							when char_length(pay_date) = 9 and position('/' in pay_date) = 2
+					        then '0' || pay_date
+							when char_length(pay_date) = 9 and position('/' in pay_date) = 3
+					        then substr(pay_date,1,3) || '0' || substr(pay_date,4,9)
+							when char_length(pay_date) = 8
+					        then '0' || substr(pay_date,1,2) || '0' || substr(pay_date,3,8) else null end) as date format 'mm/dd/yyyy') pay_date,
+					   	cast(gross_pay_dc as dec(15,2)) gross_pay_dc,
+					   	cast(gross_pay_editor as dec(15,2)) gross_pay_editor,
+					   	cast(gross_pay_image as dec(15,2)) gross_pay_image,
+					   	cast(gross_pay_mgmt as dec(15,2)) gross_pay_mgmt,
+					   	cast(gross_pay_ops as dec(15,2)) gross_pay_ops,
+					   	cast(gross_pay_se as dec(15,2)) gross_pay_se,
+					   	cast(gross_pay_video as dec(15,2)) gross_pay_video,
+					   	cast(gross_pay_writer as dec(15,2)) gross_pay_writer
+					from sandbox.edit_cost_load) a
+				expand on period(period_start, period_end + interval '1' day) pay_range by interval '1' day) a ) a
+	join sandbox.edit_daily_hc b
+		on a.day_rw = b.day_rw
+) with data primary index(day_rw);
+
+
+
+
+
+
+
+
+
+
+-- aggregate daily costs with daily headcounts
+
+create set table sandbox.edit_agg_daily_cost as (
+	select
+		a.day_rw,
+		pay_date,
+		case
+			when pay_date <= '2014-03-31'
+				then (n_dc * daily_avg_dc) + (n_editor * daily_avg_editor) + (n_image * daily_avg_image) + (n_mgmt * daily_avg_mgmt) + ((n_ops + n_video) * daily_avg_ops) + (n_se * daily_avg_se) + (n_writer * daily_avg_writer)
+			else (n_dc * daily_avg_dc) + (n_editor * daily_avg_editor) + (n_image * daily_avg_image) + (n_mgmt * daily_avg_mgmt) + (n_ops * daily_avg_ops) + (n_se * daily_avg_se) + (n_video * daily_avg_video) + (n_writer * daily_avg_writer)
+			end raw_cost_per_day,
+		case
+			when pay_date <= '2014-03-31'
+				then (n_dc * daily_avg_dc) + ((n_editor - sc_editor) * daily_avg_editor) + ((n_image - sc_image) * daily_avg_image) + (n_mgmt * daily_avg_mgmt) + ((n_ops + n_video) * daily_avg_ops) + (n_se * daily_avg_se) + ((n_writer - sc_writer) * daily_avg_writer)
+			else (n_dc * daily_avg_dc) + ((n_editor - sc_editor) * daily_avg_editor) + ((n_image - sc_image) * daily_avg_image) + (n_mgmt * daily_avg_mgmt) + (n_ops * daily_avg_ops) + (n_se * daily_avg_se) + (n_video * daily_avg_video) + ((n_writer - sc_writer) * daily_avg_writer)
+			end adj_cost_per_day,
+		(local_services * (n_dc / (n_se + n_dc)) * daily_avg_dc) + (local_services * (n_se / (n_se + n_dc)) * daily_avg_se) + (local_mgmt * daily_avg_mgmt) + (local_writer * daily_avg_writer) + (local_editor * daily_avg_editor) + (local_image * daily_avg_image) local_cost_per_day,
+		(goods_services * (n_dc / (n_se + n_dc)) * daily_avg_dc) + (goods_services * (n_se / (n_se + n_dc)) * daily_avg_se) + (goods_mgmt * daily_avg_mgmt) + (goods_writer * daily_avg_writer) + (goods_editor * daily_avg_editor) + (goods_image * daily_avg_image) goods_cost_per_day,
+		(getaways_services * (n_dc / (n_se + n_dc)) * daily_avg_dc) + (getaways_services * (n_se / (n_se + n_dc)) * daily_avg_se) + (getaways_mgmt * daily_avg_mgmt) + (getaways_writer * daily_avg_writer) + (getaways_editor * daily_avg_editor) + (getaways_image * daily_avg_image) getaways_cost_per_day,
+		(live_services * (n_dc / (n_se + n_dc)) * daily_avg_dc) + (live_services * (n_se / (n_se + n_dc)) * daily_avg_se) + (live_mgmt * daily_avg_mgmt) + (live_writer * daily_avg_writer) + (live_editor * daily_avg_editor) + (live_image * daily_avg_image) live_cost_per_day,
+		(sc_writer * daily_avg_writer) + (sc_editor * daily_avg_editor) + (sc_image * daily_avg_image) sc_cost_per_day,
+		(n_ops * daily_avg_ops) ops_cost_per_day,
+		case 
+			when a.day_rw < '2014-03-03' then null
+			when pay_date <= '2014-03-31' then (n_video * daily_avg_ops)
+			else n_video * daily_avg_video end video_cost_per_day,
+		(project_writer * daily_avg_writer) + (project_editor * daily_avg_editor) project_cost_per_day
+	from sandbox.edit_daily_avg_cost a
+	join sandbox.edit_daily_hc b
+		on a.day_rw = b.day_rw
+) with data primary index(day_rw);
