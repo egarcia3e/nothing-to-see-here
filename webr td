@@ -3349,3 +3349,16 @@ where a.week_start between '2012-11-15' and current_date - 7)
 with data primary index(week_start);
 
 
+
+
+
+
+
+
+
+
+drop table sandbox.edit_sf_load;
+drop table sandbox.edit_zd_load;
+drop table sandbox.edit_ir_load;
+drop table sandbox.edit_gdoc_load;
+drop table sandbox.edit_hr_workers_load;
