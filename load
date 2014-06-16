@@ -1,15 +1,3 @@
-drop table sandbox.edit_sf_load;
-drop table sandbox.edit_zd_load;
-drop table sandbox.edit_ir_load;
-drop table sandbox.edit_gdoc_load;
-drop table sandbox.edit_hr_workers_load;
-drop table sandbox.edit_cost_load;
-
-
-
-
-
-
 create set table sandbox.edit_sf_load (
 	opportunity_id varchar(18) character set unicode casespecific,
 	deal_creator varchar(30) character set unicode casespecific,
@@ -130,19 +118,6 @@ create multiset table sandbox.edit_hr_workers_load (
 	cost_center varchar(100) character set unicode casespecific,
 	supervisor_name varchar(50) character set unicode casespecific
 ) unique primary index(employee_name);
-create set table sandbox.edit_cost_load (
-	period_start varchar(20) character set unicode casespecific,
-	period_end varchar(20) character set unicode casespecific,
-	pay_date varchar(20) character set unicode casespecific,
-	gross_pay_dc varchar(20) character set unicode casespecific,
-	gross_pay_editor varchar(20) character set unicode casespecific,
-	gross_pay_image varchar(20) character set unicode casespecific,
-	gross_pay_mgmt varchar(20) character set unicode casespecific,
-	gross_pay_ops varchar(20) character set unicode casespecific,
-	gross_pay_se varchar(20) character set unicode casespecific,
-	gross_pay_video varchar(20) character set unicode casespecific,
-	gross_pay_writer varchar(20) character set unicode casespecific
-) primary index(period_start), index(period_end);
 
 
 
@@ -158,11 +133,10 @@ grant all on sandbox.edit_zd_load to shicks;
 grant all on sandbox.edit_ir_load to shicks;
 grant all on sandbox.edit_gdoc_load to shicks;
 grant all on sandbox.edit_hr_workers_load to shicks;
-grant all on sandbox.edit_cost_load to shicks;
 
 grant all on sandbox.edit_sf_load to egarcia;
 grant all on sandbox.edit_zd_load to egarcia;
 grant all on sandbox.edit_ir_load to egarcia;
 grant all on sandbox.edit_gdoc_load to egarcia;
 grant all on sandbox.edit_hr_workers_load to egarcia;
-grant all on sandbox.edit_cost_load to egarcia;
+
