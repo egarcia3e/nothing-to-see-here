@@ -143,3 +143,26 @@ create set table sandbox.edit_cost_load (
 	gross_pay_video varchar(20) character set unicode casespecific,
 	gross_pay_writer varchar(20) character set unicode casespecific
 ) primary index(period_start), index(period_end);
+
+
+
+
+
+
+
+
+
+
+grant all on sandbox.edit_sf_load to shicks;
+grant all on sandbox.edit_zd_load to shicks;
+grant all on sandbox.edit_ir_load to shicks;
+grant all on sandbox.edit_gdoc_load to shicks;
+grant all on sandbox.edit_hr_workers_load to shicks;
+grant all on sandbox.edit_cost_load to shicks;
+
+grant all on sandbox.edit_sf_load to egarcia;
+grant all on sandbox.edit_zd_load to egarcia;
+grant all on sandbox.edit_ir_load to egarcia;
+grant all on sandbox.edit_gdoc_load to egarcia;
+grant all on sandbox.edit_hr_workers_load to egarcia;
+grant all on sandbox.edit_cost_load to egarcia;
