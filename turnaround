@@ -3,76 +3,85 @@ Main issue at present: 10:58AM counts as 10AM */
 
 
 if [start_time] > [end_time] then null
-else
+elseif date(start_time) = date(end_time) and datepart('hour',start_time) > 17 and datepart('hour',end_time) > 17 then 0
+elseif date(start_time) + 1 = date(end_time) and datepart('hour',start_time) >= 17 and datepart('hour',end_time) < 9 then 0
+elseif date(start_time) + 1 = date(end_time) and datepart('hour',start_time) >= 17 and datepart('hour',end_time) >= 9 and datepart('hour',end_time) < 17 then datepart('hour',end_time) - 9
+elseif date(start_time) + 1 = date(end_time) and datepart('hour',start_time) >= 17 and datepart('hour',end_time) >= 17 then 8
+elseif date(start_time) = date(end_time) and datepart('hour',start_time) < 17 and datepart('hour',end_time) >= 9 then datepart('hour',end_time) - datepart('hour',start_time)
+elseif date(start_time) = date(end_time) and datepart('hour',start_time) < 9 and datepart('hour',end_time) <= 17 then datepart('hour',end_time) - 9
+elseif date(start_time) = date(end_time) and datepart('hour',start_time) >= 9 and datepart('hour',end_time) > 17 then 17 - datepart('hour',start_time)
+elseif date(start_time) = date(end_time) and datepart('hour',start_time) < 9 and datepart('hour',end_time) > 17 then 8
+elseif date(start_time) = date(end_time) and datepart('hour',start_time) < 9 and datepart('hour',end_time) < 9 then 0
 
+else
 // week diff
-(int(datediff('week',[start_time],[end_time],'sunday'))*40)
+(int(datediff('week',[start_time],[end_time],'sunday'))*40
 
 // weekday diff
--
-case datepart('weekday',[end_time]) 
++
+case datepart('weekday',[start_time]) 
 when 1 then
-    if datepart('weekday',[start_time]) = 1 then 0
-    elseif datepart('weekday',[start_time]) = 2 then 8
-    elseif datepart('weekday',[start_time]) = 3 then 16
-    elseif datepart('weekday',[start_time]) = 4 then 24
-    elseif datepart('weekday',[start_time]) = 5 then 32
-    elseif datepart('weekday',[start_time]) = 6 then 40
-    elseif datepart('weekday',[start_time]) = 7 then 40
+    if datepart('weekday',[end_time]) = 1 then 0
+    elseif datepart('weekday',[end_time]) = 2 then 8
+    elseif datepart('weekday',[end_time]) = 3 then 16
+    elseif datepart('weekday',[end_time]) = 4 then 24
+    elseif datepart('weekday',[end_time]) = 5 then 32
+    elseif datepart('weekday',[end_time]) = 6 then 40
+    elseif datepart('weekday',[end_time]) = 7 then 40
     end
 when 2 then
-    if datepart('weekday',[start_time]) = 1 then -8
-    elseif datepart('weekday',[start_time]) = 2 then 0
-    elseif datepart('weekday',[start_time]) = 3 then 8
-    elseif datepart('weekday',[start_time]) = 4 then 16
-    elseif datepart('weekday',[start_time]) = 5 then 24
-    elseif datepart('weekday',[start_time]) = 6 then 32
-    elseif datepart('weekday',[start_time]) = 7 then 32
+    if datepart('weekday',[end_time]) = 1 then -8
+    elseif datepart('weekday',[end_time]) = 2 then 0
+    elseif datepart('weekday',[end_time]) = 3 then 8
+    elseif datepart('weekday',[end_time]) = 4 then 16
+    elseif datepart('weekday',[end_time]) = 5 then 24
+    elseif datepart('weekday',[end_time]) = 6 then 32
+    elseif datepart('weekday',[end_time]) = 7 then 32
     end 
 when 3 then
-    if datepart('weekday',[start_time]) = 1 then -16
-    elseif datepart('weekday',[start_time]) = 2 then -8
-    elseif datepart('weekday',[start_time]) = 3 then 0
-    elseif datepart('weekday',[start_time]) = 4 then 8
-    elseif datepart('weekday',[start_time]) = 5 then 16
-    elseif datepart('weekday',[start_time]) = 6 then 24
-    elseif datepart('weekday',[start_time]) = 7 then 24
+    if datepart('weekday',[end_time]) = 1 then -16
+    elseif datepart('weekday',[end_time]) = 2 then -8
+    elseif datepart('weekday',[end_time]) = 3 then 0
+    elseif datepart('weekday',[end_time]) = 4 then 8
+    elseif datepart('weekday',[end_time]) = 5 then 16
+    elseif datepart('weekday',[end_time]) = 6 then 24
+    elseif datepart('weekday',[end_time]) = 7 then 24
     end 
 when 4 then
-    if datepart('weekday',[start_time]) = 1 then -24
-    elseif datepart('weekday',[start_time]) = 2 then -16
-    elseif datepart('weekday',[start_time]) = 3 then -8
-    elseif datepart('weekday',[start_time]) = 4 then 0
-    elseif datepart('weekday',[start_time]) = 5 then 8
-    elseif datepart('weekday',[start_time]) = 6 then 16
-    elseif datepart('weekday',[start_time]) = 7 then 16
+    if datepart('weekday',[end_time]) = 1 then -24
+    elseif datepart('weekday',[end_time]) = 2 then -16
+    elseif datepart('weekday',[end_time]) = 3 then -8
+    elseif datepart('weekday',[end_time]) = 4 then 0
+    elseif datepart('weekday',[end_time]) = 5 then 8
+    elseif datepart('weekday',[end_time]) = 6 then 16
+    elseif datepart('weekday',[end_time]) = 7 then 16
     end 
 when 5 then
-    if datepart('weekday',[start_time]) = 1 then -32
-    elseif datepart('weekday',[start_time]) = 2 then -24
-    elseif datepart('weekday',[start_time]) = 3 then -16
-    elseif datepart('weekday',[start_time]) = 4 then -8
-    elseif datepart('weekday',[start_time]) = 5 then 0
-    elseif datepart('weekday',[start_time]) = 6 then 8
-    elseif datepart('weekday',[start_time]) = 7 then 8
+    if datepart('weekday',[end_time]) = 1 then -32
+    elseif datepart('weekday',[end_time]) = 2 then -24
+    elseif datepart('weekday',[end_time]) = 3 then -16
+    elseif datepart('weekday',[end_time]) = 4 then -8
+    elseif datepart('weekday',[end_time]) = 5 then 0
+    elseif datepart('weekday',[end_time]) = 6 then 8
+    elseif datepart('weekday',[end_time]) = 7 then 8
     end 
 when 6 then
-    if datepart('weekday',[start_time]) = 1 then -40
-    elseif datepart('weekday',[start_time]) = 2 then -32
-    elseif datepart('weekday',[start_time]) = 3 then -24
-    elseif datepart('weekday',[start_time]) = 4 then -16
-    elseif datepart('weekday',[start_time]) = 5 then -8
-    elseif datepart('weekday',[start_time]) = 6 then 0
-    elseif datepart('weekday',[start_time]) = 7 then 0
+    if datepart('weekday',[end_time]) = 1 then -40
+    elseif datepart('weekday',[end_time]) = 2 then -32
+    elseif datepart('weekday',[end_time]) = 3 then -24
+    elseif datepart('weekday',[end_time]) = 4 then -16
+    elseif datepart('weekday',[end_time]) = 5 then -8
+    elseif datepart('weekday',[end_time]) = 6 then 0
+    elseif datepart('weekday',[end_time]) = 7 then 0
     end 
 when 7 then
-    if datepart('weekday',[start_time]) = 1 then -40
-    elseif datepart('weekday',[start_time]) = 2 then -32
-    elseif datepart('weekday',[start_time]) = 3 then -24
-    elseif datepart('weekday',[start_time]) = 4 then -16
-    elseif datepart('weekday',[start_time]) = 5 then -8
-    elseif datepart('weekday',[start_time]) = 6 then 0
-    elseif datepart('weekday',[start_time]) = 7 then 0
+    if datepart('weekday',[end_time]) = 1 then -40
+    elseif datepart('weekday',[end_time]) = 2 then -32
+    elseif datepart('weekday',[end_time]) = 3 then -24
+    elseif datepart('weekday',[end_time]) = 4 then -16
+    elseif datepart('weekday',[end_time]) = 5 then -8
+    elseif datepart('weekday',[end_time]) = 6 then 0
+    elseif datepart('weekday',[end_time]) = 7 then 0
 end end
 
 // start hour
@@ -84,7 +93,6 @@ elseif datepart('hour',[start_time]) >= 17 then 0 end
 // end hour
 - 
 if datepart('hour',[end_time]) < 17 and datepart('hour',[end_time]) > 9 then 17 - datepart('hour',[end_time])
-elseif datepart('hour',[end_time]) <= 9 and datepart('hour',[start_time]) >= 17 then 0
 elseif datepart('hour',[end_time]) <= 9 then 8
 elseif datepart('hour',[end_time]) >= 17 then 0 end
 
@@ -105,5 +113,5 @@ elseif datepart('hour',[end_time]) >= 17 then 0 end
 - if date([start_time]) < date('2014-11-28') and date([end_time]) >= date('2014-11-28') then 8 else 0 end
 - if date([start_time]) < date('2014-12-24') and date([end_time]) >= date('2014-12-24') then 8 else 0 end
 - if date([start_time]) < date('2014-12-25') and date([end_time]) >= date('2014-12-25') then 8 else 0 end
-- if date([start_time]) < date('2015-01-01') and date([end_time]) >= date('2015-01-01') then 8 else 0 end 
+- if date([start_time]) < date('2015-01-01') and date([end_time]) >= date('2015-01-01') then 8 else 0 end)
 end
