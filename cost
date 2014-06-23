@@ -1,5 +1,4 @@
 -- load table
-drop table sandbox.edit_cost_load;
 create set table sandbox.edit_cost_load (
 	period_start varchar(20) character set unicode casespecific,
 	period_end varchar(20) character set unicode casespecific,
@@ -20,30 +19,12 @@ grant all on sandbox.edit_cost_load to egarcia;
 
 
 
--- for data loader
-create set table sandbox.edit_cost_load (
-	period_start varchar(20) character set unicode casespecific,
-	period_end varchar(20) character set unicode casespecific,
-	pay_date varchar(20) character set unicode casespecific,
-	gross_pay_dc varchar(20) character set unicode casespecific,
-	gross_pay_editor varchar(20) character set unicode casespecific,
-	gross_pay_image varchar(20) character set unicode casespecific,
-	gross_pay_mgmt varchar(20) character set unicode casespecific,
-	gross_pay_ops varchar(20) character set unicode casespecific,
-	gross_pay_se varchar(20) character set unicode casespecific,
-	gross_pay_video varchar(20) character set unicode casespecific,
-	gross_pay_writer varchar(20) character set unicode casespecific
-) primary index(period_start), index(period_end);
-
-
 
 
 
 
 
 -- convert headcount to daily
-
-
 create set table sandbox.edit_daily_hc as (
 select
 	week_start,
@@ -128,8 +109,12 @@ from (select
 
 
 
--- convert averages to daily
 
+
+
+
+
+-- convert averages to daily
 create set table sandbox.edit_daily_avg_cost as (
 	select
 		a.day_rw,
@@ -218,11 +203,9 @@ create set table sandbox.edit_daily_avg_cost as (
 
 
 -- aggregate daily costs with daily headcounts
-
 create set table sandbox.edit_agg_daily_cost as (
 	select
 		a.day_rw,
-		pay_date,
 		case
 			when pay_date <= '2014-03-31'
 				then (n_dc * daily_avg_dc) + (n_editor * daily_avg_editor) + (n_image * daily_avg_image) + (n_mgmt * daily_avg_mgmt) + ((n_ops + n_video) * daily_avg_ops) + (n_se * daily_avg_se) + (n_writer * daily_avg_writer)
@@ -243,8 +226,26 @@ create set table sandbox.edit_agg_daily_cost as (
 			when a.day_rw < '2014-03-03' then null
 			when pay_date <= '2014-03-31' then (n_video * daily_avg_ops)
 			else n_video * daily_avg_video end video_cost_per_day,
-		(project_writer * daily_avg_writer) + (project_editor * daily_avg_editor) project_cost_per_day
+		(project_writer * daily_avg_writer) + (project_editor * daily_avg_editor) project_cost_per_day,
+		local_writer + local_editor + local_image + local_services + local_mgmt local_hc,
+		goods_writer + goods_editor + goods_image + goods_services + goods_mgmt goods_hc,
+		getaways_writer + getaways_editor + getaways_image + getaways_services+ getaways_mgmt getaways_hc,
+		live_writer + live_editor + live_image + live_services + live_mgmt live_hc,
+		sc_writer + sc_editor + sc_image sc_hc,
+		project_writer + project_editor project_hc,
+		n_ops ops_hc
 	from sandbox.edit_daily_avg_cost a
 	join sandbox.edit_daily_hc b
 		on a.day_rw = b.day_rw
 ) with data primary index(day_rw);
+grant all on sandbox.edit_agg_daily_cost to shicks;
+grant all on sandbox.edit_agg_daily_cost to egarcia;
+
+
+
+
+
+
+drop table sandbox.edit_cost_load;
+drop table sandbox.edit_daily_avg_cost;
+drop table sandbox.edit_daily_hc;
