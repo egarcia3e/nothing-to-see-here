@@ -3372,18 +3372,9 @@ drop table sandbox.edit_hr_workers_load;
 
 
 
-grant all on sandbox.edit_sf to egarcia;
-grant all on sandbox.edit_zd to egarcia;
-grant all on sandbox.edit_info_req to egarcia;
 grant all on sandbox.edit_google_doc to egarcia;
 grant all on sandbox.edit_current_staff to egarcia;
-grant all on sandbox.edit_staffcount to egarcia;
 grant all on sandbox.edit_headcount to egarcia;
-
-grant all on sandbox.edit_sf to shicks;
-grant all on sandbox.edit_zd to shicks;
-grant all on sandbox.edit_info_req to shicks;
 grant all on sandbox.edit_google_doc to shicks;
 grant all on sandbox.edit_current_staff to shicks;
-grant all on sandbox.edit_staffcount to shicks;
 grant all on sandbox.edit_headcount to shicks;
