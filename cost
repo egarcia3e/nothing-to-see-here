@@ -216,10 +216,10 @@ create set table sandbox.edit_agg_daily_cost as (
 				then (n_dc * daily_avg_dc) + ((n_editor - sc_editor) * daily_avg_editor) + ((n_image - sc_image) * daily_avg_image) + (n_mgmt * daily_avg_mgmt) + ((n_ops + n_video) * daily_avg_ops) + (n_se * daily_avg_se) + ((n_writer - sc_writer) * daily_avg_writer)
 			else (n_dc * daily_avg_dc) + ((n_editor - sc_editor) * daily_avg_editor) + ((n_image - sc_image) * daily_avg_image) + (n_mgmt * daily_avg_mgmt) + (n_ops * daily_avg_ops) + (n_se * daily_avg_se) + (n_video * daily_avg_video) + ((n_writer - sc_writer) * daily_avg_writer)
 			end adj_cost_per_day,
-		(local_services * (n_dc / (n_se + n_dc)) * daily_avg_dc) + (local_services * (n_se / (n_se + n_dc)) * daily_avg_se) + (local_mgmt * daily_avg_mgmt) + (local_writer * daily_avg_writer) + (local_editor * daily_avg_editor) + (local_image * daily_avg_image) local_cost_per_day,
-		(goods_services * (n_dc / (n_se + n_dc)) * daily_avg_dc) + (goods_services * (n_se / (n_se + n_dc)) * daily_avg_se) + (goods_mgmt * daily_avg_mgmt) + (goods_writer * daily_avg_writer) + (goods_editor * daily_avg_editor) + (goods_image * daily_avg_image) goods_cost_per_day,
-		(getaways_services * (n_dc / (n_se + n_dc)) * daily_avg_dc) + (getaways_services * (n_se / (n_se + n_dc)) * daily_avg_se) + (getaways_mgmt * daily_avg_mgmt) + (getaways_writer * daily_avg_writer) + (getaways_editor * daily_avg_editor) + (getaways_image * daily_avg_image) getaways_cost_per_day,
-		(live_services * (n_dc / (n_se + n_dc)) * daily_avg_dc) + (live_services * (n_se / (n_se + n_dc)) * daily_avg_se) + (live_mgmt * daily_avg_mgmt) + (live_writer * daily_avg_writer) + (live_editor * daily_avg_editor) + (live_image * daily_avg_image) live_cost_per_day,
+		(local_services * (n_dc / (n_se + n_dc)) * daily_avg_dc) + (local_services * (n_se / (n_se + n_dc)) * daily_avg_se) + (local_writer * daily_avg_writer) + (local_editor * daily_avg_editor) + (local_image * daily_avg_image) local_cost_per_day,
+		(goods_services * (n_dc / (n_se + n_dc)) * daily_avg_dc) + (goods_services * (n_se / (n_se + n_dc)) * daily_avg_se) + (goods_writer * daily_avg_writer) + (goods_editor * daily_avg_editor) + (goods_image * daily_avg_image) goods_cost_per_day,
+		(getaways_services * (n_dc / (n_se + n_dc)) * daily_avg_dc) + (getaways_services * (n_se / (n_se + n_dc)) * daily_avg_se) + (getaways_writer * daily_avg_writer) + (getaways_editor * daily_avg_editor) + (getaways_image * daily_avg_image) getaways_cost_per_day,
+		(live_services * (n_dc / (n_se + n_dc)) * daily_avg_dc) + (live_services * (n_se / (n_se + n_dc)) * daily_avg_se) + (live_writer * daily_avg_writer) + (live_editor * daily_avg_editor) + (live_image * daily_avg_image) live_cost_per_day,
 		(sc_writer * daily_avg_writer) + (sc_editor * daily_avg_editor) + (sc_image * daily_avg_image) sc_cost_per_day,
 		(n_ops * daily_avg_ops) ops_cost_per_day,
 		case 
@@ -227,13 +227,14 @@ create set table sandbox.edit_agg_daily_cost as (
 			when pay_date <= '2014-03-31' then (n_video * daily_avg_ops)
 			else n_video * daily_avg_video end video_cost_per_day,
 		(project_writer * daily_avg_writer) + (project_editor * daily_avg_editor) project_cost_per_day,
-		local_writer + local_editor + local_image + local_services + local_mgmt local_hc,
-		goods_writer + goods_editor + goods_image + goods_services + goods_mgmt goods_hc,
-		getaways_writer + getaways_editor + getaways_image + getaways_services+ getaways_mgmt getaways_hc,
-		live_writer + live_editor + live_image + live_services + live_mgmt live_hc,
+		local_writer + local_editor + local_image + local_services local_hc,
+		goods_writer + goods_editor + goods_image + goods_services goods_hc,
+		getaways_writer + getaways_editor + getaways_image + getaways_services getaways_hc,
+		live_writer + live_editor + live_image + live_services live_hc,
 		sc_writer + sc_editor + sc_image sc_hc,
 		project_writer + project_editor project_hc,
-		n_ops ops_hc
+		n_ops ops_hc,
+		n_dc + n_image + n_ops + n_mgmt + n_se + n_writer + n_editor + n_video total_hc
 	from sandbox.edit_daily_avg_cost a
 	join sandbox.edit_daily_hc b
 		on a.day_rw = b.day_rw
