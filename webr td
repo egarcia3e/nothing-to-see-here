@@ -3124,6 +3124,47 @@ from sandbox.edit_ir_load a
 
 
 
+drop table sandbox.edit_td_ratio;
+create set table sandbox.edit_td_ratio as (
+select
+created_date,
+channel,
+n_image_tickets / n_deals image_td_ratio,
+n_copy_tickets / n_deals copy_td_ratio
+from (select
+			calendar_date created_date,
+			sf.channel,
+			cast(count(distinct(case when image_or_copy = 'Image' then ticket_id end)) as dec(10,2)) n_image_tickets,
+			cast(count(distinct(case when image_or_copy = 'Copy' then ticket_id end)) as dec(10,2)) n_copy_tickets,
+			cast(count(distinct opportunity_id) as dec(10,2)) n_deals
+		from sys_calendar.calendar cal
+		join sandbox.edit_sf sf
+		on cal.calendar_date = sf.edit_setup_date
+		join (select
+				cast(created_at at time zone 'America Central' as date) created_date,
+				channel,
+				image_or_copy,
+				ticket_id
+			from sandbox.edit_zd a
+			join sandbox.edit_sf b
+			on a.permalink = b.permalink) zd
+		on cal.calendar_date = zd.created_date and sf.channel = zd.channel
+
+		where sf.channel <> 'G-Team'
+		and day_of_week not in (1,7)
+
+		group by 1,2) a
+) with data primary index(created_date), index(channel);
+
+
+
+
+
+
+
+
+
+
 drop table sandbox.edit_google_doc;
 create set table sandbox.edit_google_doc as (
 select
