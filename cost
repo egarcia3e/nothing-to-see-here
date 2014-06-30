@@ -25,6 +25,7 @@ grant all on sandbox.edit_cost_load to egarcia;
 
 
 -- convert headcount to daily
+drop table sandbox.edit_daily_hc;
 create set table sandbox.edit_daily_hc as (
 select
 	week_start,
@@ -104,6 +105,9 @@ from (select
 		on b.week_start = c.week_start
 	expand on period(a.week_start,a.week_end) week_period by interval '1' day) a
 ) with data primary index(day_rw);
+grant all on sandbox.edit_daily_hc to shicks;
+grant all on sandbox.edit_daily_hc to egarcia;
+
 
 
 
@@ -115,6 +119,7 @@ from (select
 
 
 -- convert averages to daily
+drop table sandbox.edit_daily_avg_cost;
 create set table sandbox.edit_daily_avg_cost as (
 	select
 		a.day_rw,
@@ -192,6 +197,8 @@ create set table sandbox.edit_daily_avg_cost as (
 	join sandbox.edit_daily_hc b
 		on a.day_rw = b.day_rw
 ) with data primary index(day_rw);
+grant all on sandbox.edit_daily_avg_cost to shicks;
+grant all on sandbox.edit_daily_avg_cost to egarcia;
 
 
 
@@ -203,6 +210,7 @@ create set table sandbox.edit_daily_avg_cost as (
 
 
 -- aggregate daily costs with daily headcounts
+drop table sandbox.edit_agg_daily_cost;
 create set table sandbox.edit_agg_daily_cost as (
 	select
 		a.day_rw,
@@ -248,5 +256,5 @@ grant all on sandbox.edit_agg_daily_cost to egarcia;
 
 
 drop table sandbox.edit_cost_load;
-drop table sandbox.edit_daily_avg_cost;
-drop table sandbox.edit_daily_hc;
+
+
