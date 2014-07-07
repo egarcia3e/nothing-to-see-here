@@ -1,0 +1,12 @@
+drop table sandbox.edit_sf_load;
+drop table sandbox.edit_zd_load;
+drop table sandbox.edit_ir_load;
+drop table sandbox.edit_gdoc_load;
+drop table sandbox.edit_hr_workers_load;
+
+grant all on sandbox.edit_google_doc to egarcia;
+grant all on sandbox.edit_current_staff to egarcia;
+grant all on sandbox.edit_headcount to egarcia;
+grant all on sandbox.edit_google_doc to shicks;
+grant all on sandbox.edit_current_staff to shicks;
+grant all on sandbox.edit_headcount to shicks;
