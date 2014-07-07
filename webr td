@@ -1,20 +1,246 @@
 /*
-Before running this:
+data sources:
+SF -- https://na8.salesforce.com/00OC0000005NnwQ
+ZD -- https://grouhelpon.zendesk.com/reports#export
+IR -- https://na8.salesforce.com/00OC0000005nrch
+HR -- http://hris.group.on/w
+GD -- https://docs.google.com/a/groupon.com/spreadsheets/d/1RHs32_2KVx-Du6dQhULqR91B8-rkjbZ7noZEU8Wp-Ew/edit#gid=0
 
-1.
-download SF -- https://na8.salesforce.com/00OC0000005NnwQ
-download ZD -- https://grouhelpon.zendesk.com/reports#export
-download IR -- https://na8.salesforce.com/00OC0000005nrch
-download HR -- http://hris.group.on/w
-download GD -- https://docs.google.com/a/groupon.com/spreadsheets/d/1RHs32_2KVx-Du6dQhULqR91B8-rkjbZ7noZEU8Wp-Ew/edit#gid=0
-
-2. clean/load those files
-
-3. run these in Teradata
 delete from sandbox.edit_sf where cast(deal_vette_time at time zone 'America Central' as date) >= [[First Export Date]]
 delete from sandbox.edit_zd where cast(created_at at time zone 'America Central' as date) >= [[First Export Date]]
 delete from sandbox.edit_info_req where cast(requested_ts at time zone 'America Central' as date) >= [[First Export Date]]
 */
+
+/*
+performs every webr update except for cost
+
+creates two tables from scratch:
+
+	sandbox.edit_headcount
+	sandbox.edit_google_doc
+
+updates three tables that already exist:
+
+	sandbox.edit_sf
+	sandbox.edit_zd
+	sandbox.edit_info_req
+
+it will also update sandbox.edit_current_staff
+which sandbox.edit_headcount is dependent on... 
+this can lead to multiple rows for a single week if executed multiple times
+*/
+
+
+drop table sandbox.edit_google_doc;
+drop table sandbox.edit_current_staff;
+drop table sandbox.edit_headcount;
+
+
+
+create set table sandbox.edit_google_doc as (
+	select
+		cast((case 
+				when index(week_start,'-') <> 0 
+					then null
+				when char_length(week_start) = 10 
+					then week_start
+				when char_length(week_start) = 9 and position('/' in week_start) = 2
+					then '0' || week_start
+				when char_length(week_start) = 9 and position('/' in week_start) = 3
+					then substr(week_start,1,3) || '0' || substr(week_start,4,9)
+				when char_length(week_start) = 8
+					then '0' || substr(week_start,1,2) || '0' || substr(week_start,3,8) else null end) as date format 'mm/dd/yyyy') as week_start,
+		cast(getaways_writer_hc as dec(7,3)) getaways_writer_hc,
+		cast(getaways_ae_hc as dec(7,3)) getaways_ae_hc,
+		cast(getaways_editor_hc as dec(7,3)) getaways_editor_hc,
+		cast(getaways_image_hc as dec(7,3)) getaways_image_hc,
+		cast(getaways_service_hc as dec(7,3)) getaways_service_hc,
+		cast(getaways_mgmt_hc as dec(7,3)) getaways_mgmt_hc,
+		cast(goods_writer_hc as dec(7,3)) goods_writer_hc,
+		cast(goods_ae_hc as dec(7,3)) goods_ae_hc,
+		cast(goods_editor_hc as dec(7,3)) goods_editor_hc,
+		cast(goods_image_hc as dec(7,3)) goods_image_hc,
+		cast(goods_service_hc as dec(7,3)) goods_service_hc,
+		cast(goods_mgmt_hc as dec(7,3)) goods_mgmt_hc,
+		cast(live_writer_hc as dec(7,3)) live_writer_hc,
+		cast(live_ae_hc as dec(7,3)) live_ae_hc,
+		cast(live_editor_hc as dec(7,3)) live_editor_hc,
+		cast(live_image_hc as dec(7,3)) live_image_hc,
+		cast(live_service_hc as dec(7,3)) live_service_hc,
+		cast(live_mgmt_hc as dec(7,3)) live_mgmt_hc,
+		cast(sc_writer_hc as dec(7,3)) sc_writer_hc,
+		cast(sc_ae_hc as dec(7,3)) sc_ae_hc,
+		cast(sc_editor_hc as dec(7,3)) sc_editor_hc,
+		cast(sc_image_hc as dec(7,3)) sc_image_hc,
+		cast(project_writer_hc as dec(7,3)) project_writer_hc,
+		cast(project_ae_hc as dec(7,3)) project_ae_hc,
+		cast(project_editor_hc as dec(7,3)) project_editor_hc,
+		cast(n_merchant_lists as int) n_merchant_lists,
+		cast(n_guide_articles as int) n_guide_articles,
+		cast(n_merchant_pages as int) n_merchant_pages,
+		cast(n_primers as int) n_primers,
+		cast(n_natl_guide as int) n_natl_guide,
+		cast(n_null_pages as int) n_null_pages,
+		cast(n_natl_seo_profiles as int) n_natl_seo_profiles,
+		cast(n_getaways_hotel_pages as int) n_getaways_hotel_pages,
+		cast(n_getaways_area_sections as int) n_getaways_area_sections,
+		cast(n_goods_video_complete as int) n_goods_video_complete,
+		cast(n_local_video_complete as int) n_local_video_complete,
+		cast(n_local_deals_covered as int) n_local_deals_covered,
+		cast(n_total_video_views as int) n_total_video_views,
+		cast(n_video_dropoff_rate as dec(10,4)) n_video_dropoff_rate,
+		cast(n_studio_shots as int) n_studio_shots,
+		cast(n_studio_shoots as int) n_studio_shoots
+	from sandbox.edit_gdoc_load)
+with data primary index(week_start);
+
+
+
+create set table sandbox.edit_current_staff as (
+	select
+		employee_name,
+		business_title,
+		case 
+			when business_title = 'Deputy Managing Editor' then 'Management'
+			when business_title = 'Creative Trainer' then 'Ops'
+			when business_title = 'Image Site Editor' then 'ISE'
+			when business_title = 'Manager of Editorial Services' then 'Management'
+			when business_title = 'Local Video Editor' then 'Video'
+			when business_title = 'Site Editor' then 'SE'
+			when business_title = 'Editorial Comms Liaison' then 'Ops'
+			when business_title = 'DME' then 'Management'
+			when business_title = 'Video Production Coordinator' then 'Video'
+			when business_title = 'Deal Coordinator' then 'CC'
+			when business_title = 'Video Editor, Local' then 'Video'
+			when business_title = 'Mgr, Editorial Data Analytics' then 'Ops'
+			when business_title = 'Sr Analyst' then 'Ops'
+			when business_title = 'Sr Writer' then 'Writer'
+			when business_title = 'Temp Dir. of Visual Content' then 'Mgmt'
+			when business_title = 'Sr. Editor' then 'Editor'
+			when business_title = 'Manager ISE' then 'Mgmt'
+			when business_title = 'Creative Director' then 'Mgmt'
+			when business_title = 'Stylist' then 'Image'
+			when business_title = 'Merchant Photographer' then 'Image'
+			when business_title = 'Senior Writer' then 'Writer'
+			when business_title = 'Video Editor' then 'Video'
+			when business_title = 'Staff Writer' then 'Writer'
+			when business_title = 'Site Edit Manager' then 'Management'
+			when business_title = 'Editor' and employee_name <> 'Jordan Keller' then 'Editor'
+			when business_title = 'Editorial Project Manager' then 'Ops'
+			when business_title = 'Managing Editor' then 'Management'
+			when business_title = 'Head of Editorial Image Design' then 'Management'
+			when business_title = 'Senior Video Editor' then 'Video'
+			when business_title = 'Video Editor/Videographer' then 'Video'
+			when business_title = 'Director, Editorial Operations' then 'Management'
+			when business_title = 'Senior Image Designer' then 'Image'
+			when business_title = 'Site Admin Manager' then 'Management'
+			when business_title = 'Analyst, Editorial' then 'Ops'
+			when business_title = 'Senior Site Editor' then 'SE'
+			when business_title = 'Sr Project Manager, Editorial' then 'Management'
+			when business_title = 'Senior Editor' then 'Editor'
+			when business_title = 'Image Manager' then 'Management'
+			when business_title = 'Senior Project Lead' then 'Ops'
+			when business_title = 'Digital Asset Administrator' then 'Ops'
+			when business_title = 'Director of Editorial Content' then 'Management'
+			when business_title = 'Humor Video Producer' then 'Video'
+			when business_title = 'Image Designer' then 'Image'
+			when business_title = 'Associate Project Manager' then 'Ops'
+			when business_title = 'Sr Image Site Editor' then 'ISE'
+			when employee_name = 'Jordan Keller' then 'Video'
+			when employee_name = 'Matthew Barnd' then 'CC'
+		else null end stage,
+		supervisor_name manager_name,
+		case supervisor_name
+			when 'Amy Browning' then 'Andy Anderegg'
+			when 'Christian Craig' then 'Kevin Orsini'
+			when 'Lindsay Moore-siegel' then 'Andy Anderegg'
+			when 'Jeremey Watson' then 'Julie Goding'
+			when 'Michael Nuhn' then 'Kevin Orsini'
+			when 'Amanda Nyren' then 'Kevin Orsini'
+			when 'Lindsey Hook' then 'Julie Goding'
+			when 'Jeffrey Cockrell' then 'Andy Anderegg'
+			when 'Lara Unnerstall' then 'Kevin Orsini'
+			when 'Anja Keppeler' then 'Nathan Brown'
+			when 'Brian Schuering' then 'Andy Anderegg'
+			when 'Lisa Lux' then 'Julie Goding'
+			when 'Kelsey Mueller' then 'Kevin Orsini'
+			when 'John Flaherty' then 'Andy Anderegg'
+		else null end l1_name
+	from sandbox.edit_hr_workers_load
+	where country_code = 'USA'
+		and cost_center = 'Marketing - Editorial'
+) with data primary index (employee_name);
+
+
+
+insert into sandbox.edit_staffcount
+	select
+		cast(c.week_start as date) week_start,
+		cast(c.week_end as date) week_end,
+		sum(case when stage = 'CC' then 1 else 0 end) n_dc,
+		sum(case when stage = 'Writer' then 1 else 0 end) n_writer,
+		sum(case when stage = 'Editor' then 1 else 0 end) n_editor,
+		sum(case when stage = 'Image' or stage = 'ISE' then 1 else 0 end) n_image,
+		sum(case when stage = 'SE' then 1 else 0 end) n_se,
+		sum(case when stage = 'Video' then 1 else 0 end) n_video,
+		sum(case when stage = 'Ops' then 1 else 0 end) n_ops,
+		sum(case when stage = 'Management' then 1 else 0 end) n_mgmt
+	from sandbox.edit_current_staff a
+	join user_groupondw.dim_day b
+		on current_date = day_rw
+	join user_groupondw.dim_week c
+		on b.week_key = c.week_key
+	group by 1,2;
+
+
+
+create set table sandbox.edit_headcount as (
+	select 
+		a.week_start,
+		n_writer - getaways_writer_hc - goods_writer_hc - live_writer_hc - sc_writer_hc - project_writer_hc local_writer,
+		n_editor - getaways_editor_hc - getaways_ae_hc - goods_editor_hc - live_editor_hc - live_ae_hc - goods_ae_hc - sc_ae_hc - sc_editor_hc - project_ae_hc - project_editor_hc local_editor,
+		n_image - getaways_image_hc - goods_image_hc - live_image_hc - sc_image_hc local_image,
+		n_dc + n_se - getaways_service_hc - goods_service_hc - live_service_hc local_services,
+		n_mgmt - getaways_mgmt_hc - goods_mgmt_hc - live_mgmt_hc local_mgmt,
+		getaways_writer_hc getaways_writer,
+		getaways_ae_hc + getaways_editor_hc getaways_editor,
+		getaways_image_hc getaways_image,
+		getaways_service_hc getaways_services,
+		getaways_mgmt_hc getaways_mgmt,
+		goods_writer_hc goods_writer,
+		goods_ae_hc + goods_editor_hc goods_editor,
+		goods_image_hc goods_image,
+		goods_service_hc goods_services,
+		goods_mgmt_hc goods_mgmt,
+		live_writer_hc live_writer,
+		live_ae_hc + live_editor_hc live_editor,
+		live_image_hc live_image,
+		live_service_hc live_services,
+		live_mgmt_hc live_mgmt,
+		sc_writer_hc sc_writer,
+		sc_ae_hc + sc_editor_hc sc_editor,
+		sc_image_hc sc_image,
+		project_writer_hc project_writer,
+		project_ae_hc + project_editor_hc project_editor,
+		local_writer + local_editor + local_image + local_services + ops + local_mgmt local_headcount,
+		getaways_writer + getaways_editor + getaways_image + getaways_services  + getaways_mgmt getaways_headcount,
+		goods_writer + goods_editor + goods_image + goods_services + goods_mgmt goods_headcount,
+		live_writer + live_editor + live_image + live_services + live_mgmt live_headcount,
+		sc_writer + sc_editor + sc_image sc_headcount,
+		project_writer + project_editor project_headcount,
+		n_writer + n_editor + n_image + n_dc + n_se + n_video + n_ops + n_mgmt total_headcount,
+		n_video video,
+		n_ops ops
+	from sandbox.edit_staffcount a
+	left join sandbox.edit_google_doc b
+		on a.week_start = b.week_start
+	where a.week_start between '2012-11-15' and current_date - 7)
+with data primary index(week_start);
+
+
+
+
+
 
 
 
@@ -163,7 +389,7 @@ insert into sandbox.edit_sf
 						then '0' || trim(substr(cc_ts,1,2)) || '0' || trim(substr(cc_ts,3,7)) || ' 0' || trim(substr(cc_ts,10,13)) || ':00' end) as timestamp(0) format 'mm/dd/yyyybhh:mi:ss') cc_ts
 				from sandbox.edit_sf_load) cc
 	on load.opportunity_id = cc.opportunity_id
-	
+
 	where deal_key is not null
 		and opp.self_service_deal <> 1;
 
@@ -176,8 +402,79 @@ insert into sandbox.edit_sf
 
 
 
+insert into sandbox.edit_info_req
+	select
+	a.opportunity_id,
+	ir_creator_name,
+	ir_creator_stage,
+	info_needed_from,
+	whats_missing,
+	b.requested_ts - cast(extract(timezone_hour from cast(b.requested_ts as timestamp(0) format 'dd/mm/yyyybhh:mi:ss' with time zone at time zone 'America Central')) as interval hour) requested_ts,
+	b.resolved_ts - cast(extract(timezone_hour from cast(b.resolved_ts as timestamp(0) format 'dd/mm/yyyybhh:mi:ss' with time zone at time zone 'America Central')) as interval hour) resolved_ts,
+	cast((case 
+			when index(images_received,'-') <> 0 
+				then null
+			when char_length(images_received) = 10 
+				then images_received
+			when char_length(images_received) = 9 and position('/' in images_received) = 2
+				then '0' || images_received
+			when char_length(images_received) = 9 and position('/' in images_received) = 3
+				then substr(images_received,1,3) || '0' || substr(images_received,4,9)
+			when char_length(images_received) = 8
+				then '0' || substr(images_received,1,2) || '0' || substr(images_received,3,8) else null end) as date format 'mm/dd/yyyy') as images_received,
+	status,
+	cast(uir as int) uir
+	from sandbox.edit_ir_load a
+	join (select
+		opportunity_id,
+		cast((case 
+        	when char_length(requested_ts) = 16 and char_length(trim(substr(requested_ts,1,10))) = 10 and char_length(trim(substr(requested_ts,12,16))) = 5 
+        		then requested_ts || ':00'
+        	when char_length(requested_ts) = 15 and char_length(trim(substr(requested_ts,1,10))) = 9 and char_length(trim(substr(requested_ts,11,15))) = 5 and position('/' in requested_ts) = 3 and position('/' in trim(substr(requested_ts,4,7))) = 2 
+        		then substr(requested_ts,1,3) || '0' || substr(requested_ts,4,15) || ':00'
+        	when char_length(requested_ts) = 15 and char_length(trim(substr(requested_ts,1,10))) = 9 and char_length(trim(substr(requested_ts,11,15))) = 5 and position('/' in requested_ts) = 2 and position('/' in trim(substr(requested_ts,4,7))) = 2 
+        		then '0' || requested_ts || ':00'
+        	when char_length(requested_ts) = 15 and char_length(trim(substr(requested_ts,1,10))) = 10 and char_length(trim(substr(requested_ts,11,15))) = 4 
+        		then substr(requested_ts,1,11) || '0' || substr(requested_ts,12,15) || ':00' 
+        	when char_length(requested_ts) = 14 and char_length(trim(substr(requested_ts,1,9))) = 9 and char_length(trim(substr(requested_ts,10,14))) = 4 and position('/' in requested_ts) = 2
+        		then '0' || substr(requested_ts,1,10) || '0' || substr(requested_ts,11,14) || ':00'
+        	when char_length(requested_ts) = 14 and char_length(trim(substr(requested_ts,1,9))) = 9 and char_length(trim(substr(requested_ts,10,14))) = 4 and position('/' in substr(requested_ts,4,6)) = 2
+        		then substr(requested_ts,1,3) || '0' || substr(requested_ts,4,7) || '0' || substr(requested_ts,11,14) || ':00'
+        	when char_length(requested_ts) = 14 and char_length(trim(substr(requested_ts,1,9))) = 8 and char_length(trim(substr(requested_ts,10,14))) = 5
+        		then '0' || substr(requested_ts,1,2) || '0' || substr(requested_ts,3,7) || substr(requested_ts,10,14) || ':00'
+        	when char_length(requested_ts) = 13 
+        		then '0' || trim(substr(requested_ts,1,2)) || '0' || trim(substr(requested_ts,3,7)) || ' 0' || trim(substr(requested_ts,10,13)) || ':00' end) as timestamp(0) format 'mm/dd/yyyybhh:mi:ss') as requested_ts,
+		cast((case 
+        	when char_length(resolved_ts) = 16 and char_length(trim(substr(resolved_ts,1,10))) = 10 and char_length(trim(substr(resolved_ts,12,16))) = 5 
+        		then resolved_ts || ':00'
+        	when char_length(resolved_ts) = 15 and char_length(trim(substr(resolved_ts,1,10))) = 9 and char_length(trim(substr(resolved_ts,11,15))) = 5 and position('/' in resolved_ts) = 3 and position('/' in trim(substr(resolved_ts,4,7))) = 2 
+        		then substr(resolved_ts,1,3) || '0' || substr(resolved_ts,4,15) || ':00'
+        	when char_length(resolved_ts) = 15 and char_length(trim(substr(resolved_ts,1,10))) = 9 and char_length(trim(substr(resolved_ts,11,15))) = 5 and position('/' in resolved_ts) = 2 and position('/' in trim(substr(resolved_ts,4,7))) = 2 
+        		then '0' || resolved_ts || ':00'
+        	when char_length(resolved_ts) = 15 and char_length(trim(substr(resolved_ts,1,10))) = 10 and char_length(trim(substr(resolved_ts,11,15))) = 4 
+        		then substr(resolved_ts,1,11) || '0' || substr(resolved_ts,12,15) || ':00' 
+        	when char_length(resolved_ts) = 14 and char_length(trim(substr(resolved_ts,1,9))) = 9 and char_length(trim(substr(resolved_ts,10,14))) = 4 and position('/' in resolved_ts) = 2
+        		then '0' || substr(resolved_ts,1,10) || '0' || substr(resolved_ts,11,14) || ':00'
+        	when char_length(resolved_ts) = 14 and char_length(trim(substr(resolved_ts,1,9))) = 9 and char_length(trim(substr(resolved_ts,10,14))) = 4 and position('/' in substr(resolved_ts,4,6)) = 2
+        		then substr(resolved_ts,1,3) || '0' || substr(resolved_ts,4,7) || '0' || substr(resolved_ts,11,14) || ':00'
+        	when char_length(resolved_ts) = 14 and char_length(trim(substr(resolved_ts,1,9))) = 8 and char_length(trim(substr(resolved_ts,10,14))) = 5
+        		then '0' || substr(resolved_ts,1,2) || '0' || substr(resolved_ts,3,7) || substr(resolved_ts,10,14) || ':00'
+        	when char_length(resolved_ts) = 13 
+        		then '0' || trim(substr(resolved_ts,1,2)) || '0' || trim(substr(resolved_ts,3,7)) || ' 0' || trim(substr(resolved_ts,10,13)) || ':00' end) as timestamp(0) format 'mm/dd/yyyybhh:mi:ss') as resolved_ts
+		from sandbox.edit_ir_load) b
+	on a.opportunity_id = b.opportunity_id;
+
+
+
+
+
+
+
+
+
+
 insert into sandbox.edit_zd
-select
+	select
     permalink,
     requester,
     your_department requester_dept,
@@ -224,7 +521,8 @@ select
     liveroot_three,
     case when manager_override = 'Live Root 3' and split_part(override_verdict,'::',1) = 'Override Confirmed' 
         then null else livefault_three end livefault_three
-from (select
+	
+	from (select
         ticket_id,
         requester,
         submitter,
@@ -3043,338 +3341,3 @@ join (select
         on a.ticket_id = b.ticket_id
 where position('automation' in tags) = 0 and position('auto1' in tags) = 0 and position('azd' in tags) = 0
     and country_city in (null,'-','Willow');
-
-
-
-
-
-
-
-
-
-
-insert into sandbox.edit_info_req
-select
-	a.opportunity_id,
-	ir_creator_name,
-	ir_creator_stage,
-	info_needed_from,
-	whats_missing,
-	b.requested_ts - cast(extract(timezone_hour from cast(b.requested_ts as timestamp(0) format 'dd/mm/yyyybhh:mi:ss' with time zone at time zone 'America Central')) as interval hour) requested_ts,
-	b.resolved_ts - cast(extract(timezone_hour from cast(b.resolved_ts as timestamp(0) format 'dd/mm/yyyybhh:mi:ss' with time zone at time zone 'America Central')) as interval hour) resolved_ts,
-	cast((case 
-			when index(images_received,'-') <> 0 
-				then null
-			when char_length(images_received) = 10 
-				then images_received
-			when char_length(images_received) = 9 and position('/' in images_received) = 2
-				then '0' || images_received
-			when char_length(images_received) = 9 and position('/' in images_received) = 3
-				then substr(images_received,1,3) || '0' || substr(images_received,4,9)
-			when char_length(images_received) = 8
-				then '0' || substr(images_received,1,2) || '0' || substr(images_received,3,8) else null end) as date format 'mm/dd/yyyy') as images_received,
-	status,
-	cast(uir as int) uir
-from sandbox.edit_ir_load a
-	join (select
-		opportunity_id,
-		cast((case 
-        	when char_length(requested_ts) = 16 and char_length(trim(substr(requested_ts,1,10))) = 10 and char_length(trim(substr(requested_ts,12,16))) = 5 
-        		then requested_ts || ':00'
-        	when char_length(requested_ts) = 15 and char_length(trim(substr(requested_ts,1,10))) = 9 and char_length(trim(substr(requested_ts,11,15))) = 5 and position('/' in requested_ts) = 3 and position('/' in trim(substr(requested_ts,4,7))) = 2 
-        		then substr(requested_ts,1,3) || '0' || substr(requested_ts,4,15) || ':00'
-        	when char_length(requested_ts) = 15 and char_length(trim(substr(requested_ts,1,10))) = 9 and char_length(trim(substr(requested_ts,11,15))) = 5 and position('/' in requested_ts) = 2 and position('/' in trim(substr(requested_ts,4,7))) = 2 
-        		then '0' || requested_ts || ':00'
-        	when char_length(requested_ts) = 15 and char_length(trim(substr(requested_ts,1,10))) = 10 and char_length(trim(substr(requested_ts,11,15))) = 4 
-        		then substr(requested_ts,1,11) || '0' || substr(requested_ts,12,15) || ':00' 
-        	when char_length(requested_ts) = 14 and char_length(trim(substr(requested_ts,1,9))) = 9 and char_length(trim(substr(requested_ts,10,14))) = 4 and position('/' in requested_ts) = 2
-        		then '0' || substr(requested_ts,1,10) || '0' || substr(requested_ts,11,14) || ':00'
-        	when char_length(requested_ts) = 14 and char_length(trim(substr(requested_ts,1,9))) = 9 and char_length(trim(substr(requested_ts,10,14))) = 4 and position('/' in substr(requested_ts,4,6)) = 2
-        		then substr(requested_ts,1,3) || '0' || substr(requested_ts,4,7) || '0' || substr(requested_ts,11,14) || ':00'
-        	when char_length(requested_ts) = 14 and char_length(trim(substr(requested_ts,1,9))) = 8 and char_length(trim(substr(requested_ts,10,14))) = 5
-        		then '0' || substr(requested_ts,1,2) || '0' || substr(requested_ts,3,7) || substr(requested_ts,10,14) || ':00'
-        	when char_length(requested_ts) = 13 
-        		then '0' || trim(substr(requested_ts,1,2)) || '0' || trim(substr(requested_ts,3,7)) || ' 0' || trim(substr(requested_ts,10,13)) || ':00' end) as timestamp(0) format 'mm/dd/yyyybhh:mi:ss') as requested_ts,
-		cast((case 
-        	when char_length(resolved_ts) = 16 and char_length(trim(substr(resolved_ts,1,10))) = 10 and char_length(trim(substr(resolved_ts,12,16))) = 5 
-        		then resolved_ts || ':00'
-        	when char_length(resolved_ts) = 15 and char_length(trim(substr(resolved_ts,1,10))) = 9 and char_length(trim(substr(resolved_ts,11,15))) = 5 and position('/' in resolved_ts) = 3 and position('/' in trim(substr(resolved_ts,4,7))) = 2 
-        		then substr(resolved_ts,1,3) || '0' || substr(resolved_ts,4,15) || ':00'
-        	when char_length(resolved_ts) = 15 and char_length(trim(substr(resolved_ts,1,10))) = 9 and char_length(trim(substr(resolved_ts,11,15))) = 5 and position('/' in resolved_ts) = 2 and position('/' in trim(substr(resolved_ts,4,7))) = 2 
-        		then '0' || resolved_ts || ':00'
-        	when char_length(resolved_ts) = 15 and char_length(trim(substr(resolved_ts,1,10))) = 10 and char_length(trim(substr(resolved_ts,11,15))) = 4 
-        		then substr(resolved_ts,1,11) || '0' || substr(resolved_ts,12,15) || ':00' 
-        	when char_length(resolved_ts) = 14 and char_length(trim(substr(resolved_ts,1,9))) = 9 and char_length(trim(substr(resolved_ts,10,14))) = 4 and position('/' in resolved_ts) = 2
-        		then '0' || substr(resolved_ts,1,10) || '0' || substr(resolved_ts,11,14) || ':00'
-        	when char_length(resolved_ts) = 14 and char_length(trim(substr(resolved_ts,1,9))) = 9 and char_length(trim(substr(resolved_ts,10,14))) = 4 and position('/' in substr(resolved_ts,4,6)) = 2
-        		then substr(resolved_ts,1,3) || '0' || substr(resolved_ts,4,7) || '0' || substr(resolved_ts,11,14) || ':00'
-        	when char_length(resolved_ts) = 14 and char_length(trim(substr(resolved_ts,1,9))) = 8 and char_length(trim(substr(resolved_ts,10,14))) = 5
-        		then '0' || substr(resolved_ts,1,2) || '0' || substr(resolved_ts,3,7) || substr(resolved_ts,10,14) || ':00'
-        	when char_length(resolved_ts) = 13 
-        		then '0' || trim(substr(resolved_ts,1,2)) || '0' || trim(substr(resolved_ts,3,7)) || ' 0' || trim(substr(resolved_ts,10,13)) || ':00' end) as timestamp(0) format 'mm/dd/yyyybhh:mi:ss') as resolved_ts
-		from sandbox.edit_ir_load) b
-	on a.opportunity_id = b.opportunity_id;
-
-
-
-
-
-
-
-
-
-
-drop table sandbox.edit_google_doc;
-create set table sandbox.edit_google_doc as (
-select
-	cast((case 
-			when index(week_start,'-') <> 0 
-				then null
-			when char_length(week_start) = 10 
-				then week_start
-			when char_length(week_start) = 9 and position('/' in week_start) = 2
-				then '0' || week_start
-			when char_length(week_start) = 9 and position('/' in week_start) = 3
-				then substr(week_start,1,3) || '0' || substr(week_start,4,9)
-			when char_length(week_start) = 8
-				then '0' || substr(week_start,1,2) || '0' || substr(week_start,3,8) else null end) as date format 'mm/dd/yyyy') as week_start,
-	cast(getaways_writer_hc as dec(7,3)) getaways_writer_hc,
-	cast(getaways_ae_hc as dec(7,3)) getaways_ae_hc,
-	cast(getaways_editor_hc as dec(7,3)) getaways_editor_hc,
-	cast(getaways_image_hc as dec(7,3)) getaways_image_hc,
-	cast(getaways_service_hc as dec(7,3)) getaways_service_hc,
-	cast(getaways_mgmt_hc as dec(7,3)) getaways_mgmt_hc,
-	cast(goods_writer_hc as dec(7,3)) goods_writer_hc,
-	cast(goods_ae_hc as dec(7,3)) goods_ae_hc,
-	cast(goods_editor_hc as dec(7,3)) goods_editor_hc,
-	cast(goods_image_hc as dec(7,3)) goods_image_hc,
-	cast(goods_service_hc as dec(7,3)) goods_service_hc,
-	cast(goods_mgmt_hc as dec(7,3)) goods_mgmt_hc,
-	cast(live_writer_hc as dec(7,3)) live_writer_hc,
-	cast(live_ae_hc as dec(7,3)) live_ae_hc,
-	cast(live_editor_hc as dec(7,3)) live_editor_hc,
-	cast(live_image_hc as dec(7,3)) live_image_hc,
-	cast(live_service_hc as dec(7,3)) live_service_hc,
-	cast(live_mgmt_hc as dec(7,3)) live_mgmt_hc,
-	cast(sc_writer_hc as dec(7,3)) sc_writer_hc,
-	cast(sc_ae_hc as dec(7,3)) sc_ae_hc,
-	cast(sc_editor_hc as dec(7,3)) sc_editor_hc,
-	cast(sc_image_hc as dec(7,3)) sc_image_hc,
-	cast(project_writer_hc as dec(7,3)) project_writer_hc,
-	cast(project_ae_hc as dec(7,3)) project_ae_hc,
-	cast(project_editor_hc as dec(7,3)) project_editor_hc,
-	cast(n_merchant_lists as int) n_merchant_lists,
-	cast(n_guide_articles as int) n_guide_articles,
-	cast(n_merchant_pages as int) n_merchant_pages,
-	cast(n_primers as int) n_primers,
-	cast(n_natl_guide as int) n_natl_guide,
-	cast(n_null_pages as int) n_null_pages,
-	cast(n_natl_seo_profiles as int) n_natl_seo_profiles,
-	cast(n_getaways_hotel_pages as int) n_getaways_hotel_pages,
-	cast(n_getaways_area_sections as int) n_getaways_area_sections,
-	cast(n_goods_video_complete as int) n_goods_video_complete,
-	cast(n_local_video_complete as int) n_local_video_complete,
-	cast(n_local_deals_covered as int) n_local_deals_covered,
-	cast(n_total_video_views as int) n_total_video_views,
-	cast(n_video_dropoff_rate as dec(10,4)) n_video_dropoff_rate,
-	cast(n_studio_shots as int) n_studio_shots,
-	cast(n_studio_shoots as int) n_studio_shoots
-from sandbox.edit_gdoc_load)
-with data primary index(week_start);
-
-
-
-
-
-
-
-
-
-
-drop table sandbox.edit_current_staff;
-create set table sandbox.edit_current_staff as (
-select
-	employee_name,
-	business_title,
-	case 
-		when business_title = 'Deputy Managing Editor' then 'Management'
-		when business_title = 'Creative Trainer' then 'Ops'
-		when business_title = 'Image Site Editor' then 'ISE'
-		when business_title = 'Manager of Editorial Services' then 'Management'
-		when business_title = 'Local Video Editor' then 'Video'
-		when business_title = 'Site Editor' then 'SE'
-		when business_title = 'Editorial Comms Liaison' then 'Ops'
-		when business_title = 'DME' then 'Management'
-		when business_title = 'Video Production Coordinator' then 'Video'
-		when business_title = 'Deal Coordinator' then 'CC'
-		when business_title = 'Video Editor, Local' then 'Video'
-		when business_title = 'Mgr, Editorial Data Analytics' then 'Ops'
-		when business_title = 'Sr Analyst' then 'Ops'
-		when business_title = 'Sr Writer' then 'Writer'
-		when business_title = 'Temp Dir. of Visual Content' then 'Mgmt'
-		when business_title = 'Sr. Editor' then 'Editor'
-		when business_title = 'Manager ISE' then 'Mgmt'
-		when business_title = 'Creative Director' then 'Mgmt'
-		when business_title = 'Stylist' then 'Image'
-		when business_title = 'Merchant Photographer' then 'Image'
-		when business_title = 'Senior Writer' then 'Writer'
-		when business_title = 'Video Editor' then 'Video'
-		when business_title = 'Staff Writer' then 'Writer'
-		when business_title = 'Site Edit Manager' then 'Management'
-		when business_title = 'Editor' and employee_name <> 'Jordan Keller' then 'Editor'
-		when business_title = 'Editorial Project Manager' then 'Ops'
-		when business_title = 'Managing Editor' then 'Management'
-		when business_title = 'Head of Editorial Image Design' then 'Management'
-		when business_title = 'Senior Video Editor' then 'Video'
-		when business_title = 'Video Editor/Videographer' then 'Video'
-		when business_title = 'Director, Editorial Operations' then 'Management'
-		when business_title = 'Senior Image Designer' then 'Image'
-		when business_title = 'Site Admin Manager' then 'Management'
-		when business_title = 'Analyst, Editorial' then 'Ops'
-		when business_title = 'Senior Site Editor' then 'SE'
-		when business_title = 'Sr Project Manager, Editorial' then 'Management'
-		when business_title = 'Senior Editor' then 'Editor'
-		when business_title = 'Image Manager' then 'Management'
-		when business_title = 'Senior Project Lead' then 'Ops'
-		when business_title = 'Digital Asset Administrator' then 'Ops'
-		when business_title = 'Director of Editorial Content' then 'Management'
-		when business_title = 'Humor Video Producer' then 'Video'
-		when business_title = 'Image Designer' then 'Image'
-		when business_title = 'Associate Project Manager' then 'Ops'
-		when business_title = 'Sr Image Site Editor' then 'ISE'
-		when employee_name = 'Jordan Keller' then 'Video'
-		when employee_name = 'Matthew Barnd' then 'CC'
-	else null end stage,
-	supervisor_name manager_name,
-	case supervisor_name
-		when 'Amy Browning' then 'Andy Anderegg'
-		when 'Christian Craig' then 'Kevin Orsini'
-		when 'Lindsay Moore-siegel' then 'Andy Anderegg'
-		when 'Jeremey Watson' then 'Julie Goding'
-		when 'Michael Nuhn' then 'Kevin Orsini'
-		when 'Amanda Nyren' then 'Kevin Orsini'
-		when 'Lindsey Hook' then 'Julie Goding'
-		when 'Jeffrey Cockrell' then 'Andy Anderegg'
-		when 'Lara Unnerstall' then 'Kevin Orsini'
-		when 'Anja Keppeler' then 'Nathan Brown'
-		when 'Brian Schuering' then 'Andy Anderegg'
-		when 'Lisa Lux' then 'Julie Goding'
-		when 'Kelsey Mueller' then 'Kevin Orsini'
-		when 'John Flaherty' then 'Andy Anderegg'
-	else null end l1_name
-from sandbox.edit_hr_workers_load
-where country_code = 'USA'
-	and cost_center = 'Marketing - Editorial'
-) with data primary index (employee_name);
-
-
-
-
-
-
-
-
-
-
-insert into sandbox.edit_staffcount
-select
-	cast(c.week_start as date) week_start,
-	cast(c.week_end as date) week_end,
-	sum(case when stage = 'CC' then 1 else 0 end) n_dc,
-	sum(case when stage = 'Writer' then 1 else 0 end) n_writer,
-	sum(case when stage = 'Editor' then 1 else 0 end) n_editor,
-	sum(case when stage = 'Image' or stage = 'ISE' then 1 else 0 end) n_image,
-	sum(case when stage = 'SE' then 1 else 0 end) n_se,
-	sum(case when stage = 'Video' then 1 else 0 end) n_video,
-	sum(case when stage = 'Ops' then 1 else 0 end) n_ops,
-	sum(case when stage = 'Management' then 1 else 0 end) n_mgmt
-from sandbox.edit_current_staff a
-join user_groupondw.dim_day b
-	on current_date = day_rw
-join user_groupondw.dim_week c
-	on b.week_key = c.week_key
-group by 1,2;
-
-
-
-
-
-
-
-
-
-
-drop table sandbox.edit_headcount;
-create set table sandbox.edit_headcount as (
-select 
-	a.week_start,
-	n_writer - getaways_writer_hc - goods_writer_hc - live_writer_hc - sc_writer_hc - project_writer_hc local_writer,
-	n_editor - getaways_editor_hc - getaways_ae_hc - goods_editor_hc - live_editor_hc - live_ae_hc - goods_ae_hc - sc_ae_hc - sc_editor_hc - project_ae_hc - project_editor_hc local_editor,
-	n_image - getaways_image_hc - goods_image_hc - live_image_hc - sc_image_hc local_image,
-	n_dc + n_se - getaways_service_hc - goods_service_hc - live_service_hc local_services,
-	n_mgmt - getaways_mgmt_hc - goods_mgmt_hc - live_mgmt_hc local_mgmt,
-	getaways_writer_hc getaways_writer,
-	getaways_ae_hc + getaways_editor_hc getaways_editor,
-	getaways_image_hc getaways_image,
-	getaways_service_hc getaways_services,
-	getaways_mgmt_hc getaways_mgmt,
-	goods_writer_hc goods_writer,
-	goods_ae_hc + goods_editor_hc goods_editor,
-	goods_image_hc goods_image,
-	goods_service_hc goods_services,
-	goods_mgmt_hc goods_mgmt,
-	live_writer_hc live_writer,
-	live_ae_hc + live_editor_hc live_editor,
-	live_image_hc live_image,
-	live_service_hc live_services,
-	live_mgmt_hc live_mgmt,
-	sc_writer_hc sc_writer,
-	sc_ae_hc + sc_editor_hc sc_editor,
-	sc_image_hc sc_image,
-	project_writer_hc project_writer,
-	project_ae_hc + project_editor_hc project_editor,
-	local_writer + local_editor + local_image + local_services + ops + local_mgmt local_headcount,
-	getaways_writer + getaways_editor + getaways_image + getaways_services  + getaways_mgmt getaways_headcount,
-	goods_writer + goods_editor + goods_image + goods_services + goods_mgmt goods_headcount,
-	live_writer + live_editor + live_image + live_services + live_mgmt live_headcount,
-	sc_writer + sc_editor + sc_image sc_headcount,
-	project_writer + project_editor project_headcount,
-	n_writer + n_editor + n_image + n_dc + n_se + n_video + n_ops + n_mgmt total_headcount,
-	n_video video,
-	n_ops ops
-from sandbox.edit_staffcount a
-left join sandbox.edit_google_doc b
-	on a.week_start = b.week_start
-where a.week_start between '2012-11-15' and current_date - 7)
-with data primary index(week_start);
-
-
-
-
-
-
-
-
-
-
-drop table sandbox.edit_sf_load;
-drop table sandbox.edit_zd_load;
-drop table sandbox.edit_ir_load;
-drop table sandbox.edit_gdoc_load;
-drop table sandbox.edit_hr_workers_load;
-
-
-
-
-
-
-
-
-
-
-grant all on sandbox.edit_google_doc to egarcia;
-grant all on sandbox.edit_current_staff to egarcia;
-grant all on sandbox.edit_headcount to egarcia;
-grant all on sandbox.edit_google_doc to shicks;
-grant all on sandbox.edit_current_staff to shicks;
-grant all on sandbox.edit_headcount to shicks;
