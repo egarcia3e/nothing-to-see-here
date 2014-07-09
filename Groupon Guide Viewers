@@ -1,0 +1,26 @@
+--Select those users that have viewed an article in the past 2 days
+
+select distinct a.event_date,
+			a.session_id,
+			a.cookie_b,
+			b.page_key,
+			b.page_type_name,
+			b.page_name,
+			a.event_type_key,
+			u.birth_year,
+			u.city,
+			u.state,
+			u.zip,
+			u.country,
+			u.created_date,
+			u.enrolled_in_weekly_digest,
+			u.first_purchase_date,
+			u.gender,
+			u.last_purchase_date
+
+	from user_groupondw.fact_clickstream a 
+	INNER JOIN sandbox.edit_article_page_name b on a.source_page_key = b.page_key --Contains a list of all of the articles on Groupon.com
+	INNER JOIN user_groupondw.dim_user u on u.permalink = a.USER_PERMALINK 
+	--WHERE b.page_type_name in ('merchant/merchant_list_of_lists','merchant/merchant_list','doc/all_featured_articles','city_guide/vertical_home_page','city_guide/index','city_guide/articles','articles/index')
+	WHERE event_date = date - 2
+	--group by 1,2,3,4,5,6,7;
